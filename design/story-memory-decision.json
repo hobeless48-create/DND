@@ -1,0 +1,10 @@
+{
+  "question": "Which campaign memory design best balances long-story continuity, low repeated input cost and dependable highlight saves?",
+  "options": {
+    "layered": "Bounded summary of older events, a few recent turns, canonical game facts, selectively retrieved highlights and local state snapshots; do not send the entire transcript.",
+    "summary_only": "Replace all history and game facts with a prose summary each turn.",
+    "full_history": "Resend the entire unbounded conversation every turn and store only one latest save."
+  },
+  "result": { "model": "jev-1.14.0", "provider": "typesafe", "answer": { "type": "choice", "choice": "layered", "confidence": 1.0, "probabilities": { "layered": 1.0, "summary_only": 0.0, "full_history": 0.0 } } },
+  "meaning": "Jev confidence in the selected design judgment, not an outcome probability."
+}

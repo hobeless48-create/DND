@@ -1,0 +1,12 @@
+{
+  "evaluatorSha256": "1ca088b34a27e3065fc7032651e8ab07e8348c80670dae5ab18cf66501dd9790",
+  "scalingModuleSha256": "f19fb373aed7b29409ee16e8e4da92d392ea875c27df74a4e7dcce14285894f0",
+  "baselineCommit": "b1fbb81b2ca1a0028e7a4b706500cb6bc58a3830",
+  "candidateCommit": "c0d106f48f120021a877a921a6bd2311e07f708c",
+  "matchesPerCandidate": 8640,
+  "baselineScore": -10.090952932098762,
+  "candidateScore": -9.823881172839505,
+  "keptInLab": "bonus",
+  "gameDefault": "raw",
+  "scope": "Abstract fixed-seed attack-only simulation; not a player win-rate estimate."
+}

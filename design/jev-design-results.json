@@ -1,0 +1,17 @@
+{
+  "model": "jev-1.14.0",
+  "provider": "typesafe",
+  "answers": {
+    "generated_mechanics": {
+      "choice": "declarative",
+      "confidence": 1.0,
+      "probabilities": { "declarative": 1.0, "generated_code": 0.0, "narrative_only": 0.0 }
+    },
+    "recommended_features": {
+      "choice": "telegraph_waves",
+      "confidence": 1.0,
+      "probabilities": { "telegraph_waves": 1.0, "unbounded_spawns": 0.0, "hidden_scaling": 0.0 }
+    }
+  },
+  "interpretation": "Confidence in these design judgments, not probability of future game outcomes. Questions are in jev-design-questions.json."
+}

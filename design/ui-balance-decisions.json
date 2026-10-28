@@ -1,0 +1,7 @@
+{
+  "description": "Material UI and generation-balance decisions",
+  "questions": {
+    "balance": { "type": "choice", "instructions": "Which validation design best prevents a generated class from exceeding shared power limits while preserving free class identity?", "criteria": { "aggregate_budget": "A versioned level-dependent stat point budget and aggregate skill score including damage, healing, shields, conditions, area target caps, range and uptime; reject excess before publication.", "individual_caps": "Only cap each attribute and effect independently, allowing many individually legal strengths to stack without an overall limit.", "prompt_only": "Ask the model to be balanced but accept every schema-valid result." } },
+    "themes": { "type": "choice", "instructions": "How should fantasy, apocalypse and survival themes affect a persistent tactical campaign?", "criteria": { "content_packs": "Distinct terrain images, palette, locations, story hooks, NPC/enemy labels and sample classes, while sharing the same local rules and balance budgets.", "palette_only": "Change colors and preserve the fantasy story and character names in every theme.", "separate_engines": "Build three separate combat engines with unrelated state formats." } }
+  }
+}

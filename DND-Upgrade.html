@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&D AI-Assisted VTT</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#185FA5;--secondary:#A32D2D;
+  --board-light:#F1EFE8;--board-dark:#D3D1C7;
+  --hl-move:rgba(239,159,39,0.6);--hl-atk:rgba(226,75,74,0.6);--hl-skill:rgba(92,107,192,0.6);
+  --txt:#1a1a1a;--txt2:#666;--brd:#ddd;--card:#f8f8f7;
+  --gold:#B8860B;--gold-bg:#FFFBEA;
+}
+body{font-family:system-ui,sans-serif;background:#f5f4f0;color:var(--txt);font-size:14px;
+  height:100vh;overflow:hidden;display:grid;
+  grid-template-areas:"header header""board panel";
+  grid-template-columns:1fr 360px;grid-template-rows:auto 1fr;gap:12px;padding:12px;}
+header{grid-area:header;background:#fff;border:1px solid var(--brd);border-radius:10px;padding:12px 16px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+h1{font-size:18px;font-weight:700;margin-right:12px;}
+button{cursor:pointer;border:1px solid var(--brd);border-radius:6px;padding:6px 10px;
+  background:var(--card);color:var(--txt);font-size:11px;font-weight:600;transition:all 0.15s;}
+button:hover{background:#e8e7e3;}
+button.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+button.danger{background:var(--secondary);color:#fff;border-color:var(--secondary);}
+button.gold-btn{background:var(--gold);color:#fff;border-color:var(--gold);}
+button:disabled{opacity:0.5;cursor:not-allowed;}
+input,select,textarea{border:1px solid var(--brd);border-radius:6px;padding:6px 8px;background:#fff;
+  font-size:12px;font-family:inherit;width:100%;color:var(--txt);}
+.input-group{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
+.input-group label{font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;}
+.flex-row{display:flex;gap:8px;align-items:center;}
+.board-container{grid-area:board;background:#fff;border:1px solid var(--brd);border-radius:10px;
+  overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.board-tools{display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--brd);
+  flex-wrap:wrap;align-items:center;background:#fafafa;}
+button.tool.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+#terrain-palette{display:flex;gap:8px;padding:8px 12px;background:#eef2f5;
+  border-bottom:1px solid var(--brd);flex-wrap:wrap;align-items:center;}
+.terrain-swatch{width:24px;height:24px;border-radius:4px;border:2px solid rgba(0,0,0,0.2);
+  cursor:pointer;background-size:cover;background-position:center;}
+.terrain-swatch.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary);}
+#board{flex:1;background:var(--board-light);overflow:auto;cursor:grab;padding:12px;}
+#board:active{cursor:grabbing;}
+.board-row{display:flex;}
+.cell{width:40px;height:40px;border:1px solid rgba(0,0,0,0.05);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;position:relative;flex-shrink:0;
+  background-size:cover;background-position:center;}
+.cell.light{background-color:var(--board-light);}
+.cell.dark{background-color:var(--board-dark);}
+.cell.hl-move::after{content:'';position:absolute;inset:0;background:var(--hl-move);pointer-events:none;z-index:1;}
+.cell.hl-atk::after{content:'';position:absolute;inset:0;background:var(--hl-atk);pointer-events:none;z-index:1;}
+.cell.hl-skill::after{content:'';position:absolute;inset:0;background:var(--hl-skill);pointer-events:none;z-index:1;}
+.cell.hl-chosen::after{content:'✓';position:absolute;inset:0;background:rgba(46,125,50,0.55);pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:900;}
+.token{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;border:2px solid rgba(0,0,0,0.4);color:#fff;cursor:pointer;
+  text-shadow:1px 1px 2px rgba(0,0,0,0.8);position:relative;z-index:10;
+  background-size:cover;background-position:center;background-color:#555;box-shadow:0 4px 6px rgba(0,0,0,0.3);}
+.token.selected{box-shadow:0 0 0 4px rgba(24,95,165,0.6);}
+.token .hp-bar-mini{position:absolute;bottom:-4px;left:10%;width:80%;height:4px;background:red;border-radius:2px;border:1px solid #000;}
+.token .hp-fill-mini{height:100%;background:#3B6D11;border-radius:1px;}
+.status-tags{position:absolute;top:-8px;left:0;right:0;display:flex;flex-wrap:wrap;justify-content:center;gap:1px;z-index:15;pointer-events:none;}
+.status-tag{font-size:7px;font-weight:800;padding:1px 3px;border-radius:3px;color:#fff;white-space:nowrap;line-height:1.2;}
+.panel{grid-area:panel;background:#fff;border:1px solid var(--brd);border-radius:10px;padding:16px;
+  display:flex;flex-direction:column;gap:12px;overflow-y:auto;min-height:0;}
+.panel-section{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--brd);padding-bottom:12px;position:relative;}
+.panel-section:last-child{border-bottom:none;}
+.panel-title{font-size:13px;font-weight:700;text-transform:uppercase;}
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center;font-size:10px;}
+.stat-box{background:#f0f0ee;padding:4px;border-radius:4px;border:1px solid var(--brd);}
+.stat-box strong{display:block;font-size:12px;color:var(--primary);}
+.hp-bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin:4px 0;border:1px solid #ccc;}
+.hp-fill{height:100%;background:#3B6D11;transition:width 0.2s;}
+.action-btn{padding:8px 4px;text-align:center;border-radius:6px;font-weight:700;font-size:10px;cursor:pointer;border:1px solid;}
+.action-btn.move{background:#FFF3E0;border-color:#EF9F27;color:#E65100;}
+.action-btn.attack{background:#FFEBEE;border-color:#E24B4A;color:#C62828;}
+.action-btn.skill{background:#E8EAF6;border-color:#5C6BC0;color:#283593;}
+.action-btn.active-mode{box-shadow:0 0 0 2px #000 inset;}
+.tabs{display:flex;gap:0;margin-bottom:8px;border-bottom:1px solid var(--brd);flex-wrap:wrap;}
+.tab-btn{background:transparent;border:none;font-size:10px;padding:5px 7px;color:var(--txt2);cursor:pointer;font-weight:bold;white-space:nowrap;}
+.tab-btn.active{color:var(--primary);border-bottom:2px solid var(--primary);border-radius:0;}
+.inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.inv-slot{background:#fafafa;border:1px dashed #ccc;padding:6px;border-radius:6px;font-size:10px;cursor:pointer;text-align:center;}
+.inv-slot:hover{border-color:var(--primary);background:#E6F1FB;}
+.inv-slot strong{display:block;color:var(--txt2);font-size:9px;text-transform:uppercase;margin-bottom:2px;}
+.inv-slot.filled{border-style:solid;background:#fff;border-color:var(--primary);}
+.inv-slot.filled span{color:var(--txt);font-weight:bold;font-size:11px;}
+.buff-list{display:flex;flex-direction:column;gap:4px;margin-top:4px;}
+.buff-item{background:#f0f0ff;border:1px solid #c5c8e8;border-radius:6px;padding:6px 8px;font-size:11px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
+.buff-effect{color:var(--txt2);font-size:10px;margin-top:2px;}
+.buff-remove{background:none;border:none;color:#aaa;font-size:14px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}
+.buff-remove:hover{color:var(--secondary);}
+.badge{display:inline-block;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:800;text-transform:uppercase;}
+.badge-atk{background:#FFEBEE;color:#C62828;border:1px solid #E24B4A;}
+.badge-heal{background:#E8F5E9;color:#2E7D32;border:1px solid #66BB6A;}
+.badge-buff{background:#E8EAF6;color:#283593;border:1px solid #5C6BC0;}
+.badge-debuff{background:#FFF3E0;color:#E65100;border:1px solid #EF9F27;}
+.badge-potion{background:#F3E5F5;color:#6A1B9A;border:1px solid #AB47BC;}
+.skill-card{border:1px solid var(--brd);padding:10px;border-radius:8px;background:#fff;margin-bottom:8px;}
+.skill-card h4{font-size:13px;color:var(--primary);margin:0 0 4px 0;}
+.item-card{border:1px solid var(--brd);padding:10px;border-radius:8px;background:#fff;margin-bottom:8px;}
+.item-card h4{font-size:13px;color:var(--primary);margin:0;}
+.item-meta{font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px;}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);
+  display:flex;align-items:center;justify-content:center;z-index:2000;}
+.modal{background:#fff;border-radius:12px;width:min(820px,95%);max-height:90vh;display:flex;
+  flex-direction:column;overflow:hidden;padding:16px;box-shadow:0 10px 25px rgba(0,0,0,0.5);}
+.modal-header{padding-bottom:12px;border-bottom:1px solid var(--brd);display:flex;
+  justify-content:space-between;align-items:center;margin-bottom:12px;}
+.modal-body{overflow-y:auto;}
+.shape-grid{display:inline-grid;grid-template-columns:repeat(9,28px);gap:2px;
+  user-select:none;background:#1a1a2e;padding:8px;border-radius:8px;}
+.shape-cell{width:28px;height:28px;border-radius:3px;cursor:pointer;transition:background 0.1s;border:1px solid rgba(255,255,255,0.1);}
+.shape-cell.origin-tile{background:#EF9F27 !important;}
+.shape-cell.origin-caster{background:#E24B4A !important;}
+.shape-cell.active{background:rgba(92,107,192,0.85);}
+.shape-cell.inactive{background:rgba(255,255,255,0.05);}
+.shape-cell:hover{opacity:0.8;}
+.origin-toggle{display:flex;border-radius:6px;overflow:hidden;border:1px solid var(--brd);}
+.origin-toggle button{border-radius:0;border:none;border-right:1px solid var(--brd);padding:5px 10px;font-size:10px;font-weight:700;}
+.origin-toggle button:last-child{border-right:none;}
+.origin-toggle button.active{background:#185FA5;color:#fff;}
+/* Gold bar */
+.gold-bar{display:flex;align-items:center;gap:6px;background:var(--gold-bg);border:1px solid #F0D060;
+  border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:var(--gold);}
+.gold-bar input{width:80px;border:1px solid #F0D060;background:#fff;text-align:right;
+  font-weight:700;color:var(--gold);font-size:13px;padding:3px 6px;}
+/* Bag inventory rows */
+.bag-row{display:flex;align-items:center;gap:5px;padding:6px 8px;border-radius:6px;
+  border:1px solid var(--brd);background:#fafafa;margin-bottom:4px;font-size:11px;flex-wrap:wrap;}
+.bag-row:hover{background:#f0f4ff;}
+.bag-qty{width:46px;text-align:center;padding:3px 4px;font-weight:700;font-size:13px;}
+.bag-name{flex:1;font-weight:600;min-width:80px;}
+.bag-type-pill{font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;white-space:nowrap;}
+.bag-actions{display:flex;gap:3px;flex-shrink:0;}
+.bag-actions button{padding:3px 7px;font-size:10px;}
+/* Potion section toggle */
+.potion-section{display:none;margin-top:4px;padding:8px;background:#fdf0ff;border:1px solid #d1a8e0;border-radius:6px;}
+/* Shop price */
+.shop-price{font-size:12px;font-weight:700;color:var(--gold);}
+/* Gold event row */
+.gold-event-row{display:flex;gap:4px;margin-top:6px;}
+/* Skill selected glow in panel */
+.skill-selected-indicator{
+  display:inline-flex;align-items:center;gap:3px;
+  background:#5C6BC0;color:#fff;font-size:9px;font-weight:800;
+  padding:2px 7px;border-radius:99px;animation:skill-pulse 1s ease-in-out infinite alternate;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+@keyframes skill-pulse{from{box-shadow:0 0 4px rgba(92,107,192,0.5);}to{box-shadow:0 0 12px rgba(92,107,192,1);}}
+
+/* AoE hover preview */
+.cell.hl-aoe-preview::before{content:'';position:absolute;inset:0;background:rgba(255,210,50,0.35);pointer-events:none;z-index:3;border:1px dashed rgba(255,200,0,0.8);}
+
+/* Cast confirm overlay on cells */
+.cell.hl-cast-confirm::after{
+  content:'⚡ CAST?';position:absolute;inset:0;
+  background:rgba(92,107,192,0.75);pointer-events:none;z-index:4;
+  display:flex;align-items:center;justify-content:center;
+  font-size:7px;font-weight:900;color:#fff;letter-spacing:.5px;
+  animation:cast-blink .5s step-start infinite;
+}
+@keyframes cast-blink{50%{background:rgba(120,140,255,0.9);}}
+.cell.hl-cast-confirm-aoe::after{
+  content:'';position:absolute;inset:0;
+  background:rgba(92,107,192,0.45);pointer-events:none;z-index:4;
+  border:2px solid rgba(150,165,255,0.8);
+  animation:cast-blink .5s step-start infinite;
+}
+
+/* Target chooser bar */
+#target-chooser-bar{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:#1a1a2e;color:#fff;border-radius:14px;padding:10px 18px;
+  box-shadow:0 6px 24px rgba(0,0,0,0.5);z-index:3000;
+  display:none;align-items:center;gap:12px;font-size:13px;font-weight:700;min-width:300px;}
+#target-chooser-bar.visible{display:flex;}
+#target-chosen-list{font-size:11px;color:#a0c8ff;flex:1;}
+#btn-confirm-targets{background:#3B6D11;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;}
+#btn-confirm-targets:hover{background:#2d5a0d;}
+#btn-cancel-targets{background:#A32D2D;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:700;font-size:12px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="flex-row">
+    <h1>⚔️ D&D VTT</h1>
+    <button class="primary" id="btn-undo">↩️ Undo</button>
+    <button class="danger"  id="btn-clear">Clear Board</button>
+  </div>
+  <div class="flex-row">
+    <span style="font-size:10px;font-weight:bold;color:var(--txt2);">BOARD:</span>
+    <select id="saveSlot" style="width:80px;">
+      <option>Slot 1</option><option>Slot 2</option><option>Slot 3</option><option>Slot 4</option>
+      <option>Slot 5</option><option>Slot 6</option><option>Slot 7</option><option>Slot 8</option>
+      <option>Slot 9</option><option>Slot 10</option>
+    </select>
+    <button class="primary" id="btn-save">💾 Save</button>
+    <button class="primary" id="btn-load">📂 Load</button>
+    <span style="color:#ddd;">|</span>
+    <button class="primary" id="btn-resize">📐 Resize</button>
+    <button class="primary" id="btn-export" style="background:#5C6BC0;border-color:#5C6BC0;">🤖 Export AI</button>
+    <span style="color:#ddd;">|</span>
+    <button class="primary" id="btn-spells">📖 Spells</button>
+    <button class="primary" id="btn-items">🛒 Shop</button>
+  </div>
+</header>
+
+<div class="board-container">
+  <div class="board-tools">
+    <span style="font-size:11px;font-weight:bold;color:var(--txt2);">BRUSH:</span>
+    <button class="tool active" data-tool="empty">Empty</button>
+    <button class="tool" data-tool="wall">Wall</button>
+    <button class="tool" data-tool="hazard">Hazard</button>
+    <button class="tool" data-tool="custom">Custom Tile</button>
+    <button class="tool" data-tool="terrain">🌳 Terrain</button>
+    <input type="text" id="customTileImg" placeholder="Paste image URL…" style="width:200px;display:none;">
+  </div>
+  <div id="terrain-palette" style="display:none;"></div>
+  <div id="board"></div>
+  <div id="game-log" style="height:90px;overflow-y:auto;background:#222;color:#0f0;font-family:monospace;font-size:11px;padding:8px;border-top:1px solid var(--brd);">
+    <div>&gt; System initialized...</div>
+  </div>
+</div>
+
+<div class="panel">
+  
+  <div id="character-roster" style="display: flex; gap: 8px; padding: 8px; background: #fff; border: 1px solid var(--brd); border-radius: 10px; margin-bottom: 8px; min-height: 58px; overflow-x: auto;">
+  </div>
+  
+  <div id="selectedPanel" class="panel-section" style="display:none;"></div>
+  <div id="emptyPanel" class="panel-section" style="text-align:center;padding:20px 0;color:#888;">
+    Click a unit on the board or roster to manage
+  </div>
+  <div class="panel-section">
+    <div class="panel-title">Deploy Character</div>
+    <div class="input-group">
+      <label>Name &amp; Image</label>
+      <div class="flex-row">
+        <input type="text" id="c_name" value="Hero" placeholder="Character Name">
+        <input type="color" id="c_color" value="#185FA5" style="width:40px;padding:0;">
+      </div>
+      <input type="text" id="c_image" placeholder="Image URL (Optional)">
+    </div>
+    <div class="flex-row">
+      <div class="input-group"><label>Max HP</label><input type="number" id="c_hp" value="30"></div>
+      <div class="input-group"><label>AC</label><input type="number" id="c_ac" value="15"></div>
+    </div>
+    <div class="flex-row">
+      <div class="input-group"><label>Speed (ft)</label><input type="number" id="c_speed" value="30" step="5"></div>
+      <div class="input-group"><label>Atk Range</label><input type="number" id="c_range" value="5" step="5"></div>
+    </div>
+    <div class="input-group">
+      <label>Stats (STR DEX CON INT AGI)</label>
+      <div class="stat-grid">
+        <input type="number" id="c_str" value="16">
+        <input type="number" id="c_dex" value="14">
+        <input type="number" id="c_con" value="14">
+        <input type="number" id="c_int" value="10">
+        <input type="number" id="c_agi" value="12">
+      </div>
+    </div>
+    <button class="primary" style="margin-top:4px;" id="btn-add-unit">Deploy to Board</button>
+  </div>
+</div>
+
+<div id="target-chooser-bar">
+  <div>
+    <div style="font-size:11px;color:#aaa;">CHOOSING TARGETS</div>
+    <div id="target-chosen-list">None selected</div>
+  </div>
+  <div style="font-size:12px;text-align:center;color:#aaa;" id="target-count-label">0 / ?</div>
+  <button id="btn-confirm-targets">✓ Confirm</button>
+  <button id="btn-cancel-targets">✕</button>
+</div>
+
+<div class="overlay" id="libraryOverlay" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="lib-title">Library</h2>
+      <button id="btn-close-lib">Close</button>
+    </div>
+    <div class="tabs" id="lib-tabs"></div>
+    <div class="modal-body" id="libraryBody" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+</div>
+
+<div class="overlay" id="createItemOverlay" style="display:none;z-index:2001;">
+  <div class="modal" style="width:440px;">
+    <div class="modal-header">
+      <h2 id="ci-modal-title">Create Item</h2>
+      <button id="btn-close-create-item">Cancel</button>
+    </div>
+    <div class="modal-body">
+      <div class="input-group"><label>Item Name</label><input type="text" id="ci_name"></div>
+      <div class="flex-row">
+        <div class="input-group" style="flex:1;"><label>Slot Type</label>
+          <select id="ci_type">
+            <option value="weapon">Weapon</option>
+            <option value="head">Armor: Head</option>
+            <option value="chest">Armor: Chest</option>
+            <option value="leggings">Armor: Leggings</option>
+            <option value="boots">Armor: Boots</option>
+            <option value="accessory">Accessory</option>
+            <option value="potion">Consumable / Potion</option>
+            <option value="material">Crafting Material</option>
+          </select>
+        </div>
+        <div class="input-group" style="width:90px;"><label>Price (gp)</label><input type="number" id="ci_price" value="10" min="0"></div>
+      </div>
+      <div class="input-group"><label>Effect / Description</label><input type="text" id="ci_effect" placeholder="e.g. 1d8 Slashing"></div>
+      <div class="input-group"><label>Stats Bonus</label><input type="text" id="ci_stats" placeholder="e.g. +1 AC"></div>
+      <div class="potion-section" id="ci_potion_section">
+        <div style="font-size:10px;font-weight:700;color:#6A1B9A;margin-bottom:8px;text-transform:uppercase;">🧪 Potion Heal Settings</div>
+        <div class="input-group"><label>Heal Type</label>
+          <select id="ci_heal_type">
+            <option value="flat">Flat amount (e.g. 10 HP)</option>
+            <option value="dice">Dice roll (e.g. 2d4+2)</option>
+            <option value="percent">Percent of Max HP (e.g. 25%)</option>
+          </select>
+        </div>
+        <div id="ci_heal_flat_row" class="input-group"><label>Heal Amount (HP)</label><input type="number" id="ci_heal_flat" value="10" min="1"></div>
+        <div id="ci_heal_dice_row" class="input-group" style="display:none;"><label>Dice Formula</label><input type="text" id="ci_heal_dice" placeholder="e.g. 2d4+2"></div>
+        <div id="ci_heal_pct_row" class="input-group" style="display:none;"><label>Percent of Max HP (%)</label><input type="number" id="ci_heal_pct" value="25" min="1" max="100"></div>
+      </div>
+      <button class="primary" id="btn-save-item" style="width:100%;margin-top:10px;">Save to Shop</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="createSkillOverlay" style="display:none;z-index:2001;">
+  <div class="modal" style="width:min(860px,96%);">
+    <div class="modal-header">
+      <h2 id="cs-title">Create Custom Skill</h2>
+      <button id="btn-close-skill">Cancel</button>
+    </div>
+    <div class="modal-body" style="display:flex;gap:20px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:260px;">
+        <div class="input-group"><label>Skill Name</label><input type="text" id="cs_name" placeholder="e.g. Arcane Bolt"></div>
+        <div class="input-group"><label>Type</label>
+          <select id="cs_type">
+            <option value="atk">⚔️ Attack</option><option value="heal">💚 Heal</option>
+            <option value="buff">✨ Buff</option><option value="debuff">🌀 Debuff</option>
+          </select>
+        </div>
+        <div class="flex-row">
+          <div class="input-group"><label>Range (ft)</label><input type="number" id="cs_range" value="30" step="5" min="0"></div>
+          <div class="input-group"><label>Uses / Rest</label><input type="number" id="cs_uses" value="2" min="1"></div>
+        </div>
+        <div class="input-group"><label>Description</label><textarea id="cs_desc" rows="2"></textarea></div>
+        <div class="input-group"><label>Effect / Formula</label><input type="text" id="cs_effect" placeholder="e.g. 2d6 Lightning"></div>
+        <div id="cs_buff_section" style="display:none;">
+          <div class="input-group"><label>Status Name</label><input type="text" id="cs_status_name" placeholder="e.g. Frozen"></div>
+          <div class="input-group"><label>Status Description</label><textarea id="cs_status_desc" rows="2"></textarea></div>
+          <div class="input-group"><label>Tag Color</label>
+            <div class="flex-row">
+              <input type="color" id="cs_status_color" value="#5C6BC0" style="width:40px;padding:0;">
+              <span id="cs_status_preview" style="font-size:11px;padding:2px 8px;border-radius:4px;color:#fff;background:#5C6BC0;font-weight:700;">Status</span>
+            </div>
+          </div>
+        </div>
+        <div id="cs_type_hint" style="margin-top:4px;padding:8px;background:#f9f9f9;border-radius:6px;font-size:10px;color:#888;">Damage skill.</div>
+      </div>
+      <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;">AoE Shape</div>
+        <div style="width:100%;">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px;font-weight:600;">Origin Point</div>
+          <div class="origin-toggle">
+            <button id="origin-tile" class="active">🎯 Tile Center</button>
+            <button id="origin-caster">🔥 From Caster</button>
+          </div>
+          <div id="origin-hint" style="font-size:9px;color:#888;margin-top:3px;">Shape centers on the targeted tile.</div>
+        </div>
+        <div class="shape-grid" id="cs_shape_grid"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+          <button id="sp-none">Clear</button><button id="sp-self">Self</button>
+          <button id="sp-r1">R1</button><button id="sp-r2">R2</button>
+          <button id="sp-r3">R3</button><button id="sp-line">Line</button><button id="sp-cone">Cone</button>
+        </div>
+        <div style="font-size:10px;color:var(--txt2);line-height:2;width:100%;">
+          <strong>Targeting Mode:</strong><br>
+          <label><input type="radio" name="cs_target_mode" value="center" checked> Center on tile (AoE)</label><br>
+          <label><input type="radio" name="cs_target_mode" value="choose"> Choose specific targets</label>
+          <div id="cs_max_targets_row" style="display:none;margin-top:6px;padding:6px;background:#f0f0ff;border-radius:6px;border:1px solid #c5c8e8;">
+            <label style="font-size:10px;font-weight:600;color:var(--txt2);display:block;margin-bottom:4px;">MAX TARGETS</label>
+            <input type="number" id="cs_max_targets" value="1" min="1" max="99" style="width:70px;text-align:center;font-size:13px;font-weight:700;">
+            <span style="font-size:10px;color:#888;margin-left:4px;">unit(s)</span>
+            <div style="font-size:9px;color:#888;margin-top:4px;">Click targets on board, then press Confirm.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--brd);display:flex;gap:8px;">
+      <button class="primary" id="btn-save-skill" style="flex:1;">💾 Save Skill</button>
+      <button class="danger"  id="cs_delete_btn"  style="display:none;">🗑️ Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="equipOverlay" style="display:none;z-index:2001;">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header"><h2 id="eq-title">Equip Item</h2><button id="btn-close-equip">Close</button></div>
+    <div class="modal-body" id="equipBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="aiExportOverlay" style="display:none;z-index:2005;">
+  <div class="modal" style="width:600px;">
+    <div class="modal-header"><h2>🤖 Export for AI DM</h2><button id="btn-close-ai">Close</button></div>
+    <div class="modal-body">
+      <p style="font-size:12px;margin-bottom:8px;color:var(--txt2);">Copy and paste into your AI of choice!</p>
+      <textarea id="aiExportText" rows="15" style="font-family:monospace;font-size:11px;padding:10px;"></textarea>
+      <button class="primary" id="btn-copy-ai" style="width:100%;margin-top:10px;">Copy to Clipboard</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="customAlertOverlay" style="display:none;z-index:3000;">
+  <div class="modal" style="width:300px;text-align:center;">
+    <div id="customAlertMsg" style="margin-bottom:15px;font-size:14px;"></div>
+    <button class="primary" id="btn-alert-ok" style="width:100%;">OK</button>
+  </div>
+</div>
+
+<div class="overlay" id="customPromptOverlay" style="display:none;z-index:3000;">
+  <div class="modal" style="width:300px;text-align:center;">
+    <div id="customPromptMsg" style="margin-bottom:10px;font-size:14px;"></div>
+    <input type="text" id="customPromptInput" style="margin-bottom:15px;text-align:center;font-size:16px;">
+    <div style="display:flex;gap:8px;">
+      <button id="btn-prompt-cancel" style="width:100%;">Cancel</button>
+      <button class="danger" id="btn-prompt-submit" style="width:100%;">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="customConfirmOverlay" style="display:none;z-index:3000;">
+  <div class="modal" style="width:320px;text-align:center;">
+    <div id="customConfirmMsg" style="margin-bottom:15px;font-size:14px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button id="btn-confirm-cancel" style="width:100%;">Cancel</button>
+      <button class="danger" id="btn-confirm-ok" style="width:100%;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// DATA
+// =============================================
+const SKILL_LIBRARY = {
+  fireball:      {name:'Fireball',          type:'atk', range:30,aoe:15,uses:2, desc:'15ft radius explosion.',       effect:'8d6 Fire damage',          originMode:'tile',  targetMode:'center',maxTargets:1},
+  magic_missile: {name:'Magic Missile',     type:'atk', range:40,aoe:0, uses:3, desc:'Unerring magical darts.',      effect:'3d4+3 Force damage',        originMode:'tile',  targetMode:'choose',maxTargets:3},
+  cure_wounds:   {name:'Cure Wounds',       type:'heal',range:5, aoe:0, uses:4, desc:'Heals a creature you touch.',  effect:'1d8 + INT Healing',         originMode:'tile',  targetMode:'choose',maxTargets:1},
+  mass_heal:     {name:'Mass Healing Word', type:'heal',range:30,aoe:15,uses:1, desc:'Heal all allies in area.',     effect:'1d4 + INT Healing',         originMode:'tile',  targetMode:'center',maxTargets:1},
+  dash:          {name:'Action Dash',       type:'buff',range:0, aoe:0, uses:99,desc:'Double movement speed.',       effect:'Self Buff',                  originMode:'caster',targetMode:'center',maxTargets:1},
+  cleave:        {name:'Cleave Attack',     type:'atk', range:5, aoe:5, uses:99,desc:'Swing in a wide arc.',         effect:'Weapon Damage to adjacent', originMode:'caster',targetMode:'center',maxTargets:1}
+};
+
+let ITEM_LIBRARY = [
+  {id:'i1',name:'Iron Longsword',    type:'weapon',   effect:'1d8 Slashing',    stats:'',       price:15},
+  {id:'i2',name:'Wooden Shield',     type:'weapon',   effect:'Block',            stats:'+2 AC',  price:10},
+  {id:'i3',name:'Leather Armor',     type:'chest',    effect:'Light Armor',      stats:'AC 11+DEX',price:25},
+  {id:'i4',name:'Ring of Protection',type:'accessory',effect:'Magical Ward',     stats:'+1 AC',  price:50},
+  {id:'i5',name:'Health Potion',     type:'potion',   effect:'Heals 2d4+2 HP',  stats:'',       price:5,  healType:'dice',   healDice:'2d4+2'},
+  {id:'i6',name:'Greater Potion',    type:'potion',   effect:'Heals 50% Max HP', stats:'',       price:20, healType:'percent',healPct:50},
+  {id:'i7',name:'Healing Salve',     type:'potion',   effect:'Heals 15 HP flat', stats:'',       price:8,  healType:'flat',   healFlat:15},
+  {id:'m1',name:'Iron Ingot',        type:'material', effect:'Used for blacksmithing', stats:'', price:5}
+];
+
+const TERRAIN_COLORS = {empty:'',wall:'#333',hazard:'#E24B4A'};
+let customTerrainList=[
+  {type:'color',val:'#4CAF50',name:'Grass'},
+  {type:'color',val:'#2196F3',name:'Water'},
+  {type:'color',val:'#795548',name:'Dirt'}
+];
+let activeTerrain=customTerrainList[0];
+let BOARD_W=24,BOARD_H=16;
+
+let S={
+  board:[],units:[],selected:null,
+  actionMode:null,activeSkillId:null,highlights:[],
+  editing:false,activeTab:'core',showSkills:false,
+  tool:'empty',history:[],log:[],
+  // choose-target mode state
+  choosingTargets:false,chosenTargets:[],chooseMax:0,chooseSkillId:null,chooseOriginX:0,chooseOriginY:0,
+  // AoE confirm state
+  castConfirmTile:null,  // {x,y} — tile player hovered to; confirms on click
+  aoeHoverTile:null      // {x,y} — live hover position for preview
+};
+
+let libMode='skill',libTab='all';
+let editingSkillId=null;
+let editingItemId=null;
+const SHAPE_SIZE=9,SHAPE_CTR=4;
+let skillShape=Array.from({length:SHAPE_SIZE},()=>Array(SHAPE_SIZE).fill(false));
+let shapeDrawing=false,shapePaint=true;
+let equipSlot=null;
+let skillOriginMode='tile';
+
+// =============================================
+// UTILS & ROSTER RENDER
+// =============================================
+function initBoard(){
+  S.board=[];
+  for(let y=0;y<BOARD_H;y++){S.board[y]=[];for(let x=0;x<BOARD_W;x++)S.board[y][x]={type:'empty',image:null,color:null};}
+}
+
+function renderRoster() {
+  const roster = document.getElementById('character-roster');
+  if (!roster) return;
+  roster.innerHTML = '';
+  
+  S.units.forEach(unit => {
+    const btn = document.createElement('div');
+    btn.style.width = '40px';
+    btn.style.height = '40px';
+    btn.style.borderRadius = '50%';
+    btn.style.cursor = 'pointer';
+    btn.style.flexShrink = '0';
+    btn.style.border = S.selected === unit ? '3px solid var(--primary)' : '2px solid #ccc';
+    btn.style.backgroundColor = unit.color;
+    btn.style.backgroundImage = unit.image ? `url('${unit.image}')` : 'none';
+    btn.style.backgroundSize = 'cover';
+    btn.style.backgroundPosition = 'center';
+    btn.style.display = 'flex';
+    btn.style.alignItems = 'center';
+    btn.style.justifyContent = 'center';
+    btn.style.color = '#fff';
+    btn.style.fontWeight = 'bold';
+    btn.style.fontSize = '12px';
+    btn.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+    btn.title = unit.name;
+    
+    if (!unit.image) btn.textContent = unit.name.substring(0, 2).toUpperCase();
+
+    // The Click Logic that fixes the trap bug
+    btn.onclick = () => {
+      S.actionMode = null; 
+      S.activeSkillId = null;
+      S.highlights = [];
+      S.choosingTargets = false;
+      S.showSkills = false;
+      S.editing = false;
+      
+      S.selected = unit;
+      S.activeTab = 'core';
+      
+      renderRoster();
+      renderBoard();
+      updatePanel();
+    };
+    
+    roster.appendChild(btn);
+  });
+}
+
+function addLog(msg){
+  S.log.push('> '+msg);
+  const el=document.getElementById('game-log');
+  if(el){const d=document.createElement('div');d.textContent='> '+msg;el.appendChild(d);el.scrollTop=el.scrollHeight;}
+}
+function saveHist(){
+  S.history.push({units:JSON.parse(JSON.stringify(S.units)),board:JSON.parse(JSON.stringify(S.board))});
+  if(S.history.length>20)S.history.shift();
+}
+function undo(){
+  if(!S.history.length){addLog('Nothing to undo.');return;}
+  const p=S.history.pop();S.units=p.units;S.board=p.board;
+  S.selected=null;S.actionMode=null;S.highlights=[];
+  renderBoard();updatePanel();renderRoster();addLog('Undone.');
+}
+function dist(x1,y1,x2,y2){return Math.max(Math.abs(x1-x2),Math.abs(y1-y2));}
+
+function showAlert(msg){
+  return new Promise(res=>{
+    document.getElementById('customAlertMsg').innerHTML=msg;
+    document.getElementById('customAlertOverlay').style.display='flex';
+    const btn=document.getElementById('btn-alert-ok');
+    const h=()=>{document.getElementById('customAlertOverlay').style.display='none';btn.removeEventListener('click',h);res();};
+    btn.addEventListener('click',h);
+  });
+}
+function showPrompt(msg,def='0'){
+  return new Promise(res=>{
+    document.getElementById('customPromptMsg').innerHTML=msg;
+    const inp=document.getElementById('customPromptInput');
+    inp.value=def;
+    document.getElementById('customPromptOverlay').style.display='flex';
+    inp.focus();inp.select();
+    const done=v=>{document.getElementById('customPromptOverlay').style.display='none';res(v);};
+    const ok=document.getElementById('btn-prompt-submit');
+    const ca=document.getElementById('btn-prompt-cancel');
+    const ho=()=>{done(inp.value);ok.removeEventListener('click',ho);ca.removeEventListener('click',hc);};
+    const hc=()=>{done(null);ok.removeEventListener('click',ho);ca.removeEventListener('click',hc);};
+    ok.addEventListener('click',ho);ca.addEventListener('click',hc);
+    inp.onkeyup=e=>{if(e.key==='Enter')ho();if(e.key==='Escape')hc();};
+  });
+}
+
+function showConfirm(msg,okLabel='Delete'){
+  return new Promise(res=>{
+    document.getElementById('customConfirmMsg').innerHTML=msg;
+    document.getElementById('btn-confirm-ok').textContent=okLabel;
+    document.getElementById('customConfirmOverlay').style.display='flex';
+    const ok=document.getElementById('btn-confirm-ok');
+    const ca=document.getElementById('btn-confirm-cancel');
+    const done=v=>{document.getElementById('customConfirmOverlay').style.display='none';ok.removeEventListener('click',ho);ca.removeEventListener('click',hc);res(v);};
+    const ho=()=>done(true);const hc=()=>done(false);
+    ok.addEventListener('click',ho);ca.addEventListener('click',hc);
+  });
+}
+
+function rollDice(formula){
+  formula=String(formula).toLowerCase().trim();
+  let total=0;
+  const parts=formula.split('+');
+  for(const part of parts){
+    const trimmed=part.trim();
+    if(trimmed.includes('d')){
+      const [numStr,sideStr]=trimmed.split('d');
+      const num=parseInt(numStr)||1;
+      const sides=parseInt(sideStr)||1;
+      for(let i=0;i<num;i++) total+=Math.floor(Math.random()*sides)+1;
+    } else {
+      total+=parseInt(trimmed)||0;
+    }
+  }
+  return Math.max(0,total);
+}
+
+
+function calcPotionHeal(item,unit){
+  if(item.healType==='flat')    return parseInt(item.healFlat)||0;
+  if(item.healType==='dice')    return rollDice(item.healDice||'1d4');
+  if(item.healType==='percent') return Math.floor(unit.maxHp*(parseInt(item.healPct)||25)/100);
+  return 0;
+}
+
+// =============================================
+// SKILL AOE CELL CALCULATOR (for hover preview & confirm)
+// =============================================
+function calcSkillAoeCells(skillId, cx, cy){
+  const sk=SKILL_LIBRARY[skillId];if(!sk)return[];
+  const u=S.selected;if(!u)return[];
+  const cells=[];
+  const originMode=sk.originMode||'tile';
+  if(originMode==='caster'){
+    // Shape is always relative to caster
+    if(sk.shape){
+      for(let r=0;r<SHAPE_SIZE;r++)for(let c=0;c<SHAPE_SIZE;c++){
+        if(!sk.shape[r][c]&&!(r===SHAPE_CTR&&c===SHAPE_CTR))continue;
+        const tx=u.x+(c-SHAPE_CTR),ty=u.y+(r-SHAPE_CTR);
+        if(tx>=0&&tx<BOARD_W&&ty>=0&&ty<BOARD_H)cells.push({x:tx,y:ty});
+      }
+    } else {
+      const max=Math.floor((sk.range||0)/5);
+      for(let y=0;y<BOARD_H;y++)for(let x=0;x<BOARD_W;x++)
+        if(dist(u.x,u.y,x,y)<=max)cells.push({x,y});
+    }
+  } else {
+    // tile origin — centered on cx,cy
+    if(sk.shape){
+      for(let r=0;r<SHAPE_SIZE;r++)for(let c=0;c<SHAPE_SIZE;c++){
+        if(!sk.shape[r][c]&&!(r===SHAPE_CTR&&c===SHAPE_CTR))continue;
+        const tx=cx+(c-SHAPE_CTR),ty=cy+(r-SHAPE_CTR);
+        if(tx>=0&&tx<BOARD_W&&ty>=0&&ty<BOARD_H)cells.push({x:tx,y:ty});
+      }
+    } else {
+      const aoe=sk.aoe?Math.floor(sk.aoe/5):0;
+      for(let y=0;y<BOARD_H;y++)for(let x=0;x<BOARD_W;x++)
+        if(dist(cx,cy,x,y)<=aoe)cells.push({x,y});
+    }
+  }
+  return cells;
+}
+
+// =============================================
+// BOARD RENDER
+// =============================================
+function renderBoard(){
+  const el=document.getElementById('board');if(!el)return;
+  el.innerHTML='';
+  for(let y=0;y<BOARD_H;y++){
+    const row=document.createElement('div');row.className='board-row';
+    for(let x=0;x<BOARD_W;x++){
+      const cd=S.board[y][x];
+      const cell=document.createElement('div');
+      cell.className='cell '+((x+y)%2===0?'light':'dark');
+      cell.dataset.x=x;cell.dataset.y=y;
+      if(cd.type==='custom'&&cd.image)cell.style.backgroundImage=`url('${cd.image}')`;
+      else if(cd.type!=='empty')cell.style.backgroundColor=TERRAIN_COLORS[cd.type]||cd.color||'';
+      const hl=S.highlights.find(h=>h.x===x&&h.y===y);
+      if(hl)cell.classList.add('hl-'+hl.type);
+      // Mark chosen targets
+      if(S.choosingTargets&&S.chosenTargets.find(t=>t.x===x&&t.y===y))
+        cell.classList.add('hl-chosen');
+
+      // AoE hover preview (yellow dashed) — only in skill mode before confirm
+      if(S.actionMode==='skill'&&S.activeSkillId&&!S.castConfirmTile&&S.aoeHoverTile){
+        const aoeSet=calcSkillAoeCells(S.activeSkillId,S.aoeHoverTile.x,S.aoeHoverTile.y);
+        if(aoeSet.some(c=>c.x===x&&c.y===y))cell.classList.add('hl-aoe-preview');
+      }
+      // Cast confirm (pulsing blue) — center cell shows CAST?, rest show border
+      if(S.castConfirmTile&&S.actionMode==='skill'&&S.activeSkillId){
+        const aoeSet=calcSkillAoeCells(S.activeSkillId,S.castConfirmTile.x,S.castConfirmTile.y);
+        if(x===S.castConfirmTile.x&&y===S.castConfirmTile.y)cell.classList.add('hl-cast-confirm');
+        else if(aoeSet.some(c=>c.x===x&&c.y===y))cell.classList.add('hl-cast-confirm-aoe');
+      }
+      const unit=S.units.find(u=>u.x===x&&u.y===y);
+      if(unit){
+        const tok=document.createElement('div');
+        tok.className='token'+(S.selected===unit?' selected':'');
+        tok.dataset.x=x;tok.dataset.y=y;
+        if(unit.image){tok.style.backgroundImage=`url('${unit.image}')`;tok.style.color='transparent';}
+        else{tok.style.backgroundColor=unit.color;tok.textContent=unit.name.substring(0,2).toUpperCase();}
+        const pct=Math.max(0,(unit.hp/unit.maxHp)*100);
+        const hpBar=document.createElement('div');hpBar.className='hp-bar-mini';
+        const hpFill=document.createElement('div');hpFill.className='hp-fill-mini';hpFill.style.width=pct+'%';
+        hpBar.appendChild(hpFill);tok.appendChild(hpBar);
+        if(unit.buffs&&unit.buffs.length){
+          const tags=document.createElement('div');tags.className='status-tags';
+          unit.buffs.forEach(b=>{const t=document.createElement('span');t.className='status-tag';t.style.background=b.color||'#5C6BC0';t.textContent=(b.name||'?').substring(0,5);tags.appendChild(t);});
+          tok.appendChild(tags);
+        }
+        cell.appendChild(tok);
+      }
+      row.appendChild(cell);
+    }
+    el.appendChild(row);
+  }
+  updateTargetChooserBar();
+}
+
+// =============================================
+// TARGET CHOOSER UI
+// =============================================
+function updateTargetChooserBar(){
+  const bar=document.getElementById('target-chooser-bar');
+  if(!S.choosingTargets){bar.classList.remove('visible');return;}
+  bar.classList.add('visible');
+  const sk=SKILL_LIBRARY[S.chooseSkillId];
+  const max=S.chooseMax;
+  const chosen=S.chosenTargets;
+  document.getElementById('target-count-label').textContent=chosen.length+' / '+max;
+  const listEl=document.getElementById('target-chosen-list');
+  listEl.textContent=chosen.length?chosen.map(t=>{const u=S.units.find(u=>u.x===t.x&&u.y===t.y);return u?u.name:'?';}).join(', '):'None selected';
+}
+
+function startChooseTargets(skillId,originX,originY){
+  const sk=SKILL_LIBRARY[skillId];if(!sk)return;
+  S.choosingTargets=true;
+  S.chosenTargets=[];
+  S.chooseMax=sk.maxTargets||1;
+  S.chooseSkillId=skillId;
+  S.chooseOriginX=originX;
+  S.chooseOriginY=originY;
+  updateTargetChooserBar();
+  renderBoard();
+  addLog('Choose up to '+S.chooseMax+' target(s) then click Confirm.');
+}
+
+function cancelChooseTargets(){
+  S.choosingTargets=false;S.chosenTargets=[];S.chooseSkillId=null;
+  S.actionMode=null;S.activeSkillId=null;S.highlights=[];S.showSkills=false;
+  renderBoard();updatePanel();
+}
+
+async function confirmChooseTargets(){
+  const chosen=[...S.chosenTargets];
+  const skillId=S.chooseSkillId;
+  const sk=SKILL_LIBRARY[skillId];
+  const caster=S.selected;
+  S.choosingTargets=false;S.chosenTargets=[];S.chooseSkillId=null;
+  S.actionMode=null;S.activeSkillId=null;S.highlights=[];S.showSkills=false;S.castConfirmTile=null;S.aoeHoverTile=null;
+  renderBoard();updatePanel();
+  if(!chosen.length){addLog('No targets selected — skill cancelled.');return;}
+  // Deduct use
+  const ls=caster&&caster.skills.find(s=>s.id===skillId);
+  if(ls&&ls.usesLeft>0)ls.usesLeft--;
+  // Now prompt for each chosen target
+  const targets=chosen.map(c=>S.units.find(u=>u.x===c.x&&u.y===c.y)).filter(Boolean);
+  saveHist();
+  if(sk.type==='heal'){
+    for(const t of targets){const v=await showPrompt(`Heal <b>${t.name}</b>. Amount:`,'0');if(v===null)break;const h=parseInt(v)||0;if(h>0){t.hp=Math.min(t.maxHp,t.hp+h);addLog('Healed '+t.name+' for '+h+'.');}}
+  } else if(sk.type==='atk'){
+    for(const t of targets){const v=await showPrompt(`<b>${sk.name}</b> hits <b>${t.name}</b>. Damage:`,'0');if(v===null)break;const dmg=parseInt(v)||0;if(dmg>0){t.hp=Math.max(0,t.hp-dmg);addLog(sk.name+' hit '+t.name+' for '+dmg+'.');await checkDeath(t);}else addLog(t.name+' dodged!');}
+  } else if(sk.type==='buff'||sk.type==='debuff'){
+    for(const t of targets){if(!t.buffs)t.buffs=[];t.buffs.push({name:sk.statusName||sk.name,desc:sk.statusDesc||sk.effect||'',color:sk.statusColor||(sk.type==='buff'?'#5C6BC0':'#E65100')});addLog('Applied '+(sk.statusName||sk.name)+' to '+t.name+'.');}
+  }
+  renderBoard();updatePanel();
+}
+
+// =============================================
+// PANEL — tabs: Core | Skills | Equip | Bag | Gold | Status
+// =============================================
+function updatePanel(){
+  const sp=document.getElementById('selectedPanel');
+  const ep=document.getElementById('emptyPanel');
+  if(!S.selected){sp.style.display='none';ep.style.display='block';return;}
+  ep.style.display='none';sp.style.display='flex';
+  const u=S.selected;
+  const hpPct=Math.max(0,(u.hp/u.maxHp)*100);
+
+  if(S.editing){
+    sp.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="panel-title" style="color:${u.color}">Editing: ${u.name}</div>
+      <button class="primary" id="btn-save-edit" style="padding:4px 8px;font-size:10px;">💾 Save</button>
+    </div>
+    <div class="input-group" style="margin-top:8px;"><label>Color &amp; Image</label>
+      <div class="flex-row">
+        <input type="color" id="e_color" value="${u.color}" style="width:40px;padding:0;">
+        <input type="text" id="e_image" value="${u.image||''}" placeholder="Image URL">
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="input-group"><label>Max HP</label><input type="number" id="e_hp" value="${u.maxHp}"></div>
+      <div class="input-group"><label>AC</label><input type="number" id="e_ac" value="${u.ac}"></div>
+      <div class="input-group"><label>Spd</label><input type="number" id="e_speed" value="${u.speed}"></div>
+    </div>
+    <div class="input-group"><label>Stats</label>
+      <div class="stat-grid">
+        <input type="number" id="e_str" value="${u.stats.str}">
+        <input type="number" id="e_dex" value="${u.stats.dex}">
+        <input type="number" id="e_con" value="${u.stats.con}">
+        <input type="number" id="e_int" value="${u.stats.int}">
+        <input type="number" id="e_agi" value="${u.stats.agi}">
+      </div>
+    </div>`;
+    return;
+  }
+
+  const validTabs=['core','equip','bag','gold','buffs'];
+  if(!validTabs.includes(S.activeTab))S.activeTab='core';
+  const buffCount=u.buffs&&u.buffs.length?`<span style="background:var(--secondary);color:#fff;border-radius:99px;font-size:9px;padding:1px 5px;">${u.buffs.length}</span>`:'';
+  const bagCount=u.bag&&u.bag.reduce((a,b)=>a+b.qty,0);
+  const bagBadge=bagCount?`<span style="background:#AB47BC;color:#fff;border-radius:99px;font-size:9px;padding:1px 5px;">${bagCount}</span>`:'';
+
+  let content='';
+
+  if(S.activeTab==='core'){
+    let skillsHtml='';
+    if(S.showSkills){
+      if(!u.skills.length)skillsHtml='<div style="text-align:center;color:#888;font-size:10px;margin-top:4px;">No skills learned. Visit Spells library.</div>';
+      else skillsHtml=u.skills.map(s=>{
+        const def=SKILL_LIBRARY[s.id];if(!def)return'';
+        const act=S.activeSkillId===s.id;
+        const out=s.usesLeft<=0;
+        const chooseMode=def.targetMode==='choose'?`<span style="font-size:9px;background:#E8F5E9;color:#2E7D32;padding:1px 4px;border-radius:3px;">↔ Choose</span>`:'';
+        const selectedBadge=act?`<span class="skill-selected-indicator">⚡ Selected</span>`:'';
+        return `<div style="display:flex;align-items:center;gap:4px;padding:6px 8px;background:${act?'#ECEEFF':'#f0f0ee'};border-radius:4px;margin-top:4px;${act?'outline:2px solid var(--primary);box-shadow:0 0 10px rgba(92,107,192,0.3);':''}${out?'opacity:.5;':''}">
+          <div style="flex:1;display:flex;align-items:center;gap:4px;flex-wrap:wrap;cursor:pointer;" data-learn-id="${s.id}">
+            <strong>${def.name}</strong>${chooseMode}${selectedBadge}<span style="font-size:10px;color:#888;">(${def.range}ft)</span>
+          </div>
+          <span style="font-size:10px;color:#888;white-space:nowrap;">${s.usesLeft}/${def.uses}</span>
+          <button style="padding:2px 6px;font-size:10px;flex-shrink:0;" data-panel-edit-skill="${s.id}" title="Edit skill">✏️</button>
+        </div>`;
+      }).join('');
+    }
+    content=`
+    <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:bold;"><span>HP</span><span>${u.hp}/${u.maxHp}</span></div>
+    <div class="hp-bar"><div class="hp-fill" style="width:${hpPct}%"></div></div>
+    <div class="flex-row" style="margin-top:4px;">
+      <button class="danger btn-hp" data-amt="-1" style="flex:1;">-1</button>
+      <button class="danger btn-hp" data-amt="-5" style="flex:1;">-5</button>
+      <button class="primary btn-hp" data-amt="1" style="flex:1;">+1</button>
+      <button class="primary btn-hp" data-amt="5" style="flex:1;">+5</button>
+    </div>
+    <div class="stat-grid" style="margin-top:8px;">
+      <div class="stat-box">STR<strong>${u.stats.str}</strong></div>
+      <div class="stat-box">DEX<strong>${u.stats.dex}</strong></div>
+      <div class="stat-box">CON<strong>${u.stats.con}</strong></div>
+      <div class="stat-box">INT<strong>${u.stats.int}</strong></div>
+      <div class="stat-box">AGI<strong>${u.stats.agi}</strong></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="action-btn move ${S.actionMode==='move'?'active-mode':''}" style="flex:1" data-mode="move">MOVE</button>
+      <button class="action-btn attack ${S.actionMode==='attack'?'active-mode':''}" style="flex:1" data-mode="attack">ATTACK</button>
+      <button class="action-btn skill ${(S.actionMode==='skill'||S.showSkills)?'active-mode':''}" style="flex:1" data-mode="skill">SKILLS</button>
+    </div>
+    ${skillsHtml}`;
+
+  } else if(S.activeTab==='equip'){
+    const inv=u.inventory;
+    const mk=(k,lbl)=>{
+      const item=inv[k];
+      return `<div class="inv-slot ${item?'filled':''}" data-equip-slot="${k}">
+        <strong>${lbl}</strong>
+        <span style="${item?'':'color:#aaa;font-size:10px;'}">${item?item.name:'+ Equip'}</span>
+        ${item?`<div style="font-size:9px;color:#666;margin-top:2px;">${item.effect||''} ${item.stats?'| '+item.stats:''}</div>`:''}
+        ${item?`<button class="danger" data-unequip-slot="${k}" style="margin-top:4px;padding:2px 6px;font-size:9px;width:100%;">Unequip</button>`:''}
+      </div>`;
+    };
+    content=`<div class="inv-grid">
+      ${mk('head','👒 Head')}${mk('chest','🛡 Chest')}
+      ${mk('leggings','🩲 Leggings')}${mk('boots','👢 Boots')}
+      ${mk('mainHand','⚔️ Main Hand')}${mk('offHand','🛡 Off Hand')}
+      ${mk('acc1','💍 Acc 1')}${mk('acc2','💍 Acc 2')}
+      ${mk('acc3','💍 Acc 3')}${mk('acc4','💍 Acc 4')}
+    </div>`;
+
+  } else if(S.activeTab==='bag'){
+    const bag=u.bag||[];
+    let bagHtml='';
+    if(!bag.length){
+      bagHtml='<div style="text-align:center;color:#aaa;font-size:11px;padding:12px;">Bag is empty.<br>Visit the Shop to buy items.</div>';
+    } else {
+      bagHtml=bag.map((entry,idx)=>{
+        const item=ITEM_LIBRARY.find(i=>i.id===entry.itemId);
+        if(!item)return'';
+        const isPotion=item.type==='potion';
+        const isMaterial=item.type==='material';
+        const isEquippable=['weapon','head','chest','leggings','boots','accessory'].includes(item.type);
+        
+        const typePill = isPotion
+          ? `<span class="bag-type-pill" style="background:#F3E5F5;color:#6A1B9A;">🧪</span>`
+          : isMaterial
+          ? `<span class="bag-type-pill" style="background:#EFEBE9;color:#5D4037;">💎</span>`
+          : `<span class="bag-type-pill" style="background:#E8EAF6;color:#283593;">⚙️</span>`;
+          
+        let healHint='';
+        if(isPotion){
+          if(item.healType==='flat')healHint=`<div style="font-size:9px;color:#6A1B9A;margin-top:1px;">Heals ${item.healFlat} HP</div>`;
+          else if(item.healType==='dice')healHint=`<div style="font-size:9px;color:#6A1B9A;margin-top:1px;">Heals ${item.healDice}</div>`;
+          else if(item.healType==='percent')healHint=`<div style="font-size:9px;color:#6A1B9A;margin-top:1px;">Heals ${item.healPct}% Max HP</div>`;
+        }
+        return `<div class="bag-row">
+          <div style="display:flex;align-items:center;gap:4px;">
+            ${typePill}
+            <input type="number" class="bag-qty" data-bag-idx="${idx}" value="${entry.qty}" min="0" style="width:46px;">
+          </div>
+          <div style="flex:1;">
+            <div class="bag-name">${item.name}</div>
+            ${healHint}
+          </div>
+          <div class="bag-actions">
+            ${isPotion?`<button class="primary" style="background:#AB47BC;border-color:#AB47BC;font-size:10px;padding:3px 7px;" data-use-potion="${idx}" title="Use potion">🧪 Use</button>`:''}
+            ${isEquippable?`<button style="font-size:10px;padding:3px 7px;" data-bag-equip="${idx}" title="Equip item">⚙️</button>`:''}
+            <button class="danger" style="font-size:10px;padding:3px 7px;" data-bag-remove="${idx}" title="Remove">✕</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    content=`
+    <div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;">CHARACTER BAG
+      <span style="font-weight:400;color:#888;margin-left:4px;">(adjust qty manually)</span>
+    </div>
+    <div id="bag-list">${bagHtml}</div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="primary" id="btn-open-shop-for-bag" style="flex:1;background:#5C6BC0;border-color:#5C6BC0;">🛒 Open Shop</button>
+      <button class="primary" id="btn-quick-add-bag" style="flex:1;background:#2E7D32;border-color:#2E7D32;">➕ Quick Add</button>
+    </div>
+    <div id="quick-add-bag-panel" style="display:none;margin-top:8px;padding:10px;background:#E8F5E9;border-radius:6px;border:1px solid #A5D6A7;">
+      <div style="font-size:10px;font-weight:700;margin-bottom:6px;color:#2E7D32;">QUICK CREATE & ADD</div>
+      <div class="input-group"><label>Item Name</label><input type="text" id="qa_name" placeholder="e.g. Wood, Iron Ore, Key"></div>
+      <div class="flex-row">
+        <div class="input-group" style="flex:1;"><label>Type</label>
+          <select id="qa_type">
+            <option value="material">💎 Material</option>
+            <option value="potion">🧪 Consumable</option>
+            <option value="weapon">⚔️ Weapon / Equip</option>
+          </select>
+        </div>
+        <div class="input-group" style="width:60px;"><label>Qty</label><input type="number" id="qa_qty" value="1" min="1"></div>
+      </div>
+      <button class="primary" id="btn-confirm-qa" style="width:100%;margin-top:4px;background:#1B5E20;border-color:#1B5E20;">Add to Bag</button>
+    </div>`;
+  } else if(S.activeTab==='gold'){
+    const gold=u.gold||0;
+    content=`
+    <div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:8px;">GOLD MANAGEMENT — ${u.name}</div>
+    <div class="gold-bar">
+      <span style="font-size:18px;">💰</span>
+      <span style="flex:1;">${u.name}'s Gold:</span>
+      <input type="number" id="gold-display" value="${gold}" min="0" style="width:90px;">
+      <button class="primary" style="padding:4px 8px;" id="btn-set-gold">Set</button>
+    </div>
+    <div style="font-size:10px;color:var(--txt2);margin-top:10px;margin-bottom:4px;font-weight:700;">QUICK ADJUST</div>
+    <div class="gold-event-row">
+      <button class="primary" data-gold-adj="+5" style="flex:1;">+5 gp</button>
+      <button class="primary" data-gold-adj="+10" style="flex:1;">+10 gp</button>
+      <button class="primary" data-gold-adj="+50" style="flex:1;">+50 gp</button>
+      <button class="primary" data-gold-adj="+100" style="flex:1;">+100 gp</button>
+    </div>
+    <div class="gold-event-row">
+      <button class="danger" data-gold-adj="-5" style="flex:1;">-5 gp</button>
+      <button class="danger" data-gold-adj="-10" style="flex:1;">-10 gp</button>
+      <button class="danger" data-gold-adj="-50" style="flex:1;">-50 gp</button>
+      <button class="danger" data-gold-adj="-100" style="flex:1;">-100 gp</button>
+    </div>
+    <div style="font-size:10px;color:var(--txt2);margin-top:10px;margin-bottom:4px;font-weight:700;">CUSTOM GOLD EVENT</div>
+    <div class="gold-event-row">
+      <input type="number" id="gold-custom-amt" placeholder="Amount (gp)" style="flex:1;">
+      <button class="primary" id="btn-gold-earn" style="flex:0;white-space:nowrap;">+ Earn</button>
+      <button class="danger"  id="btn-gold-spend" style="flex:0;white-space:nowrap;">- Spend</button>
+    </div>
+    <div style="font-size:10px;color:#aaa;margin-top:10px;padding:8px;background:#fafafa;border-radius:6px;border:1px dashed #ddd;">
+      💡 Gold is deducted automatically when buying from Shop. Each character has their own separate gold.
+    </div>`;
+
+  } else { // buffs
+    const buffs=u.buffs||[];
+    const items=buffs.length?buffs.map((b,i)=>`
+      <div class="buff-item">
+        <div style="flex:1;">
+          <span class="status-tag" style="background:${b.color||'#5C6BC0'};display:inline-block;margin-bottom:4px;">${b.name}</span>
+          <div class="buff-effect">${b.desc||'No description.'}</div>
+        </div>
+        <button class="buff-remove" data-buff-idx="${i}">✕</button>
+      </div>`).join('')
+      :'<div style="text-align:center;color:#aaa;font-size:11px;padding:12px;">No active status effects.</div>';
+    content=`
+    <div style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--txt2);">ACTIVE STATUS EFFECTS</div>
+    <div class="buff-list">${items}</div>
+    <button class="primary" id="btn-open-add-buff" style="margin-top:8px;width:100%;font-size:11px;">+ Apply Status Effect</button>
+    <div id="add-buff-panel" style="display:none;margin-top:10px;padding:10px;background:#f5f5ff;border-radius:8px;border:1px solid #c5c8e8;">
+      <div class="input-group"><label>Name</label><input type="text" id="manual_buff_name" placeholder="e.g. Frozen"></div>
+      <div class="input-group"><label>Description</label><textarea id="manual_buff_desc" rows="2"></textarea></div>
+      <div class="input-group"><label>Color</label><input type="color" id="manual_buff_color" value="#E24B4A" style="width:40px;padding:0;"></div>
+      <button class="primary" id="btn-apply-buff" style="width:100%;margin-top:4px;">Apply</button>
+    </div>`;
+  }
+
+  sp.innerHTML=`
+  <button id="btn-edit-unit" style="position:absolute;top:0;right:0;font-size:10px;padding:3px 6px;">⚙️ Edit</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <div class="panel-title" style="color:${u.color};">${u.name}</div>
+      <div style="font-size:10px;color:var(--txt2);">AC ${u.ac} • Spd ${u.speed}ft • 💰${u.gold||0}gp</div>
+    </div>
+    ${u.image?`<img src="${u.image}" style="width:34px;height:34px;border-radius:6px;object-fit:cover;">`:''}
+  </div>
+  <div class="tabs">
+    <button class="tab-btn ${S.activeTab==='core' ?'active':''}" data-tab="core">Core</button>
+    <button class="tab-btn ${S.activeTab==='equip'?'active':''}" data-tab="equip">Equip</button>
+    <button class="tab-btn ${S.activeTab==='bag'  ?'active':''}" data-tab="bag">🎒Bag ${bagBadge}</button>
+    <button class="tab-btn ${S.activeTab==='gold' ?'active':''}" data-tab="gold">💰Gold</button>
+    <button class="tab-btn ${S.activeTab==='buffs'?'active':''}" data-tab="buffs">Status ${buffCount}</button>
+  </div>
+  ${content}
+  <button class="danger" id="btn-remove-unit" style="margin-top:8px;">Remove Unit</button>`;
+}
+
+// =============================================
+// HIGHLIGHTS
+// =============================================
+function calcHighlights(){
+  S.highlights=[];const u=S.selected;if(!u)return;
+  if(S.actionMode==='move'){
+    const max=Math.floor(u.speed/5);
+    for(let y=0;y<BOARD_H;y++)for(let x=0;x<BOARD_W;x++){
+      const d=dist(u.x,u.y,x,y);
+      if(d>0&&d<=max&&S.board[y][x].type!=='wall'&&!S.units.find(un=>un.x===x&&un.y===y))
+        S.highlights.push({x,y,type:'move'});
+    }
+  } else if(S.actionMode==='attack'){
+    const max=Math.floor(u.attackRange/5);
+    for(let y=0;y<BOARD_H;y++)for(let x=0;x<BOARD_W;x++){
+      const d=dist(u.x,u.y,x,y);
+      if(d>0&&d<=max&&S.board[y][x].type!=='wall')S.highlights.push({x,y,type:'atk'});
+    }
+  } else if(S.actionMode==='skill'&&S.activeSkillId){
+    const sk=SKILL_LIBRARY[S.activeSkillId];if(!sk)return;
+    const originMode=sk.originMode||'tile';
+    if(originMode==='caster'){
+      const shape=sk.shape;
+      if(shape){
+        for(let r=0;r<SHAPE_SIZE;r++)for(let c=0;c<SHAPE_SIZE;c++){
+          if(!shape[r][c]&&!(r===SHAPE_CTR&&c===SHAPE_CTR))continue;
+          const tx=u.x+(c-SHAPE_CTR),ty=u.y+(r-SHAPE_CTR);
+          if(tx>=0&&tx<BOARD_W&&ty>=0&&ty<BOARD_H&&S.board[ty][tx].type!=='wall')
+            S.highlights.push({x:tx,y:ty,type:'skill'});
+        }
+      } else {
+        const max=Math.floor((sk.range||0)/5);
+        for(let y=0;y<BOARD_H;y++)for(let x=0;x<BOARD_W;x++){
+          if(dist(u.x,u.y,x,y)<=max&&S.board[y][x].type!=='wall')S.highlights.push({x,y,type:'skill'});
+        }
+      }
+    } else {
+      const max=Math.floor((sk.range||0)/5);
+      for(let y=0;y<BOARD_H;y++)for(let x=0;x<BOARD_W;x++){
+        if(dist(u.x,u.y,x,y)<=max&&S.board[y][x].type!=='wall')S.highlights.push({x,y,type:'skill'});
+      }
+    }
+  }
+}
+
+function setMode(mode){
+  if(!S.selected)return;
+  if(mode==='skill'){S.showSkills=!S.showSkills;if(!S.showSkills){S.actionMode=null;S.activeSkillId=null;S.highlights=[];S.castConfirmTile=null;S.aoeHoverTile=null;}updatePanel();renderBoard();return;}
+  if(S.actionMode===mode){S.actionMode=null;S.highlights=[];S.castConfirmTile=null;S.aoeHoverTile=null;}
+  else{S.actionMode=mode;S.showSkills=false;S.castConfirmTile=null;S.aoeHoverTile=null;calcHighlights();}
+  updatePanel();renderBoard();
+}
+
+// =============================================
+// EXECUTE ACTION
+// =============================================
+async function execAction(x,y,hlType){
+  saveHist();const u=S.selected;
+  if(hlType==='move'){u.x=x;u.y=y;addLog(u.name+' moved to ('+x+','+y+').');}
+  else if(hlType==='atk'){
+    const t=S.units.find(un=>un.x===x&&un.y===y);
+    if(t&&t!==u){
+      const v=await showPrompt(`Attack <b>${t.name}</b>. Damage (0=miss):`,'0');
+      if(v===null){addLog('Attack cancelled.');return;}
+      const dmg=parseInt(v)||0;
+      if(dmg>0){t.hp=Math.max(0,t.hp-dmg);addLog(u.name+' hit '+t.name+' for '+dmg+'.');await checkDeath(t);}
+      else addLog(u.name+' missed '+t.name+'!');
+    }else addLog('No target there.');
+  } else if(hlType==='skill'&&S.activeSkillId){
+    const sk=SKILL_LIBRARY[S.activeSkillId];if(!sk){addLog('Skill not found.');return;}
+    const targetMode=sk.targetMode||'center';
+
+    // CHOOSE mode: use the floating target bar
+    if(targetMode==='choose'){
+      // Don't execute yet — switch to choosing mode
+      S.actionMode=null;
+      S.highlights=[];
+      startChooseTargets(S.activeSkillId,x,y);
+      updatePanel();
+      return;
+    }
+
+    // CENTER / AoE mode: execute immediately
+    const ls=u.skills.find(s=>s.id===S.activeSkillId);
+    if(ls&&ls.usesLeft>0)ls.usesLeft--;
+    const originMode=sk.originMode||'tile';
+    let targets=[];
+    if(originMode==='caster'){
+      if(sk.shape){
+        for(let r=0;r<SHAPE_SIZE;r++)for(let c=0;c<SHAPE_SIZE;c++){
+          if(!sk.shape[r][c]&&!(r===SHAPE_CTR&&c===SHAPE_CTR))continue;
+          const tx=u.x+(c-SHAPE_CTR),ty=u.y+(r-SHAPE_CTR);
+          const hit=S.units.find(un=>un.x===tx&&un.y===ty);
+          if(hit&&!targets.includes(hit))targets.push(hit);
+        }
+      } else {
+        const max=Math.floor((sk.range||0)/5);
+        targets=S.units.filter(un=>dist(u.x,u.y,un.x,un.y)<=max);
+      }
+    } else {
+      if(sk.shape){
+        for(let r=0;r<SHAPE_SIZE;r++)for(let c=0;c<SHAPE_SIZE;c++){
+          if(!sk.shape[r][c]&&!(r===SHAPE_CTR&&c===SHAPE_CTR))continue;
+          const tx=x+(c-SHAPE_CTR),ty=y+(r-SHAPE_CTR);
+          if(tx<0||tx>=BOARD_W||ty<0||ty>=BOARD_H)continue;
+          const hit=S.units.find(un=>un.x===tx&&un.y===ty);
+          if(hit&&!targets.includes(hit))targets.push(hit);
+        }
+      } else {
+        const aoe=sk.aoe?Math.floor(sk.aoe/5):0;
+        targets=S.units.filter(un=>dist(x,y,un.x,un.y)<=aoe);
+      }
+    }
+    if(sk.type==='heal'){
+      if(!targets.length)targets=[u];
+      for(const t of targets){const v=await showPrompt(`Heal <b>${t.name}</b>. Amount:`,'0');if(v===null)break;const h=parseInt(v)||0;if(h>0){t.hp=Math.min(t.maxHp,t.hp+h);addLog('Healed '+t.name+' for '+h+'.');}}
+    } else if(sk.type==='atk'){
+      if(!targets.length){addLog(sk.name+' hit nothing.');}
+      else for(const t of targets){const v=await showPrompt(`<b>${sk.name}</b> hits ${t.name}. Damage:`,'0');if(v===null)break;const dmg=parseInt(v)||0;if(dmg>0){t.hp=Math.max(0,t.hp-dmg);addLog(sk.name+' hit '+t.name+' for '+dmg+'.');await checkDeath(t);}else addLog(t.name+' dodged!');}
+    } else if(sk.type==='buff'||sk.type==='debuff'){
+      const apts=targets.length?targets:[u];
+      for(const t of apts){if(!t.buffs)t.buffs=[];t.buffs.push({name:sk.statusName||sk.name,desc:sk.statusDesc||sk.effect||'',color:sk.statusColor||(sk.type==='buff'?'#5C6BC0':'#E65100')});addLog('Applied '+(sk.statusName||sk.name)+' to '+t.name+'.');}
+    }
+  }
+  S.actionMode=null;S.activeSkillId=null;S.highlights=[];S.showSkills=false;S.castConfirmTile=null;S.aoeHoverTile=null;
+  renderBoard();updatePanel();
+}
+
+async function checkDeath(t){
+  if(t.hp<=0){
+    await showAlert('<b>'+t.name+' defeated!</b>');
+    S.units=S.units.filter(u=>u!==t);
+    if(S.selected===t)S.selected=null;
+    addLog(t.name+' was defeated!');
+    renderRoster(); // Update roster when someone dies
+  }
+}
+
+// =============================================
+// GOLD HELPERS
+// =============================================
+function adjustGold(unit,delta){
+  if(!unit)return;
+  unit.gold=Math.max(0,(unit.gold||0)+delta);
+  addLog(unit.name+(delta>=0?' earned ':' spent ')+Math.abs(delta)+' gp. Balance: '+unit.gold+' gp.');
+  updatePanel();
+}
+function setGold(unit,val){
+  if(!unit)return;
+  unit.gold=Math.max(0,val);
+  addLog(unit.name+"'s gold set to "+unit.gold+' gp.');
+  updatePanel();
+}
+
+// =============================================
+// BAG / SHOP HELPERS
+// =============================================
+function addToBag(unit,item,qty){
+  if(!unit||!item)return;
+  if(!unit.bag)unit.bag=[];
+  const existing=unit.bag.find(e=>e.itemId===item.id);
+  if(existing)existing.qty+=qty;
+  else unit.bag.push({itemId:item.id,qty});
+}
+
+function removeFromBag(unit,idx){
+  if(!unit||!unit.bag)return;
+  unit.bag.splice(idx,1);
+}
+
+async function usePotionFromBag(unit,bagIdx){
+  if(!unit||!unit.bag)return;
+  const entry=unit.bag[bagIdx];if(!entry||entry.qty<=0)return;
+  const item=ITEM_LIBRARY.find(i=>i.id===entry.itemId);
+  if(!item||item.type!=='potion'){await showAlert('This item is not a potion.');return;}
+  if(unit.hp>=unit.maxHp){await showAlert(unit.name+' is already at full HP!');return;}
+  saveHist();
+  const heal=calcPotionHeal(item,unit);
+  unit.hp=Math.min(unit.maxHp,unit.hp+heal);
+  entry.qty--;
+  if(entry.qty<=0)unit.bag.splice(bagIdx,1);
+  addLog(unit.name+' used '+item.name+' and healed for '+heal+' HP. ('+unit.hp+'/'+unit.maxHp+')');
+  await showAlert(`<b>${unit.name}</b> used <b>${item.name}</b>!<br>✨ Healed <b>${heal} HP</b><br>Now at <b>${unit.hp}/${unit.maxHp} HP</b>`);
+  renderBoard();updatePanel();
+}
+
+// Equip from bag - open slot picker
+function openEquipFromBag(unit,bagIdx){
+  if(!unit||!unit.bag)return;
+  const entry=unit.bag[bagIdx];if(!entry)return;
+  const item=ITEM_LIBRARY.find(i=>i.id===entry.itemId);
+  if(!item)return;
+  const slotMap={weapon:['mainHand','offHand'],head:['head'],chest:['chest'],leggings:['leggings'],boots:['boots'],accessory:['acc1','acc2','acc3','acc4']};
+  const validSlots=slotMap[item.type]||[];
+  if(!validSlots.length){showAlert('This item type cannot be equipped.');return;}
+  const body=document.getElementById('equipBody');
+  body.innerHTML=`<p style="font-size:12px;color:var(--txt2);margin-bottom:10px;">Choose a slot for <b>${item.name}</b>:</p>`;
+  validSlots.forEach(slot=>{
+    const cur=unit.inventory[slot];
+    const label={mainHand:'⚔️ Main Hand',offHand:'🛡 Off Hand',head:'👒 Head',chest:'🛡 Chest',leggings:'🩲 Leggings',boots:'👢 Boots',acc1:'💍 Acc 1',acc2:'💍 Acc 2',acc3:'💍 Acc 3',acc4:'💍 Acc 4'}[slot]||slot;
+    body.innerHTML+=`<div class="item-card" style="cursor:pointer;margin-bottom:6px;" data-bag-equip-slot="${slot}" data-bag-equip-item-idx="${bagIdx}">
+      <h4>${label}</h4>
+      <p style="font-size:10px;color:#888;">${cur?'Currently: '+cur.name:'— Empty —'}</p>
+    </div>`;
+  });
+  document.getElementById('eq-title').textContent='Equip from Bag: '+item.name;
+  document.getElementById('equipOverlay').style.display='flex';
+}
+
+// =============================================
+// SHAPE EDITOR
+// =============================================
+function renderShapeGrid(){
+  const grid=document.getElementById('cs_shape_grid');if(!grid)return;
+  grid.innerHTML='';
+  for(let r=0;r<SHAPE_SIZE;r++)for(let c=0;c<SHAPE_SIZE;c++){
+    const isO=r===SHAPE_CTR&&c===SHAPE_CTR;
+    const cell=document.createElement('div');
+    cell.className='shape-cell '+(isO?(skillOriginMode==='caster'?'origin-caster':'origin-tile'):(skillShape[r][c]?'active':'inactive'));
+    cell.dataset.sr=r;cell.dataset.sc=c;
+    grid.appendChild(cell);
+  }
+}
+document.addEventListener('mousedown',e=>{
+  const sc=e.target.closest('.shape-cell');
+  if(sc&&!sc.classList.contains('origin-tile')&&!sc.classList.contains('origin-caster')){
+    shapeDrawing=true;const r=+sc.dataset.sr,c=+sc.dataset.sc;
+    shapePaint=!skillShape[r][c];skillShape[r][c]=shapePaint;renderShapeGrid();
+  }
+});
+document.addEventListener('mouseover',e=>{
+  if(!shapeDrawing)return;
+  const sc=e.target.closest('.shape-cell');
+  if(sc&&!sc.classList.contains('origin-tile')&&!sc.classList.contains('origin-caster')){
+    const r=+sc.dataset.sr,c=+sc.dataset.sc;skillShape[r][c]=shapePaint;renderShapeGrid();
+  }
+});
+document.addEventListener('mouseup',()=>{shapeDrawing=false;});
+
+function shapePreset(p){
+  skillShape=Array.from({length:SHAPE_SIZE},()=>Array(SHAPE_SIZE).fill(false));
+  const cx=SHAPE_CTR,cy=SHAPE_CTR;
+  if(p==='r1'){for(let r=cy-1;r<=cy+1;r++)for(let c=cx-1;c<=cx+1;c++)if(!(r===cy&&c===cx))skillShape[r][c]=true;}
+  else if(p==='r2'){for(let r=cy-2;r<=cy+2;r++)for(let c=cx-2;c<=cx+2;c++)if(!(r===cy&&c===cx))skillShape[r][c]=true;}
+  else if(p==='r3'){for(let r=cy-3;r<=cy+3;r++)for(let c=cx-3;c<=cx+3;c++)if(!(r===cy&&c===cx)&&r>=0&&r<SHAPE_SIZE&&c>=0&&c<SHAPE_SIZE)skillShape[r][c]=true;}
+  else if(p==='line'){for(let c=cx+1;c<SHAPE_SIZE;c++)skillShape[cy][c]=true;}
+  else if(p==='cone'){for(let c=cx+1;c<SHAPE_SIZE;c++){const sp=c-cx;for(let r=cy-sp;r<=cy+sp;r++)if(r>=0&&r<SHAPE_SIZE)skillShape[r][c]=true;}}
+  renderShapeGrid();
+}
+function setOriginMode(mode){
+  skillOriginMode=mode;
+  const tb=document.getElementById('origin-tile');const cb=document.getElementById('origin-caster');
+  if(tb)tb.classList.toggle('active',mode==='tile');if(cb)cb.classList.toggle('active',mode==='caster');
+  const h=document.getElementById('origin-hint');
+  if(h)h.textContent=mode==='tile'?'Shape centers on the targeted tile. (e.g. Meteor Strike)':'Shape always originates from the caster. (e.g. Flame Breath)';
+  renderShapeGrid();
+}
+function updateSkillTypeHint(){
+  const t=document.getElementById('cs_type')?.value;
+  const hints={atk:'Damage: targets take HP damage.',heal:'Heal: targets recover HP.',buff:'Buff: apply positive status.',debuff:'Debuff: apply negative status.'};
+  const h=document.getElementById('cs_type_hint');if(h)h.textContent=hints[t]||'';
+  const bs=document.getElementById('cs_buff_section');if(bs)bs.style.display=(t==='buff'||t==='debuff')?'block':'none';
+}
+function updateStatusPreview(){
+  const n=document.getElementById('cs_status_name')?.value||'Status';
+  const c=document.getElementById('cs_status_color')?.value;
+  const p=document.getElementById('cs_status_preview');
+  if(p){p.textContent=n;p.style.background=c;}
+}
+function updateTargetModeUI(){
+  const chosen=document.querySelector('input[name="cs_target_mode"]:checked')?.value;
+  const row=document.getElementById('cs_max_targets_row');
+  if(row)row.style.display=(chosen==='choose')?'block':'none';
+}
+
+function openSkillEditor(id){
+  editingSkillId=id;
+  const isBuiltin=id&&SKILL_LIBRARY[id]&&!SKILL_LIBRARY[id].custom;
+  document.getElementById('cs-title').textContent=id?(isBuiltin?'Edit Built-in Skill':'Edit Custom Skill'):'Create Custom Skill';
+  document.getElementById('cs_delete_btn').style.display=id?'block':'none';
+  document.getElementById('cs_delete_btn').textContent='🗑️ Delete Skill';
+  if(id&&SKILL_LIBRARY[id]){
+    const s=SKILL_LIBRARY[id];
+    document.getElementById('cs_name').value=s.name;document.getElementById('cs_type').value=s.type;
+    document.getElementById('cs_range').value=s.range;document.getElementById('cs_uses').value=s.uses;
+    document.getElementById('cs_desc').value=s.desc;document.getElementById('cs_effect').value=s.effect;
+    document.getElementById('cs_status_name').value=s.statusName||'';
+    document.getElementById('cs_status_desc').value=s.statusDesc||'';
+    document.getElementById('cs_status_color').value=s.statusColor||'#5C6BC0';
+    document.getElementById('cs_max_targets').value=s.maxTargets||1;
+    skillShape=s.shape?JSON.parse(JSON.stringify(s.shape)):Array.from({length:SHAPE_SIZE},()=>Array(SHAPE_SIZE).fill(false));
+    const tm=document.querySelector(`input[name="cs_target_mode"][value="${s.targetMode||'center'}"]`);if(tm)tm.checked=true;
+    skillOriginMode=s.originMode||'tile';
+  } else {
+    ['cs_name','cs_desc','cs_effect','cs_status_name','cs_status_desc'].forEach(fid=>{const el=document.getElementById(fid);if(el)el.value='';});
+    document.getElementById('cs_type').value='atk';document.getElementById('cs_range').value='30';
+    document.getElementById('cs_uses').value='2';document.getElementById('cs_status_color').value='#5C6BC0';
+    document.getElementById('cs_max_targets').value='1';
+    skillShape=Array.from({length:SHAPE_SIZE},()=>Array(SHAPE_SIZE).fill(false));
+    const r=document.querySelector('input[name="cs_target_mode"][value="center"]');if(r)r.checked=true;
+    skillOriginMode='tile';
+  }
+  setOriginMode(skillOriginMode);updateSkillTypeHint();updateStatusPreview();updateTargetModeUI();renderShapeGrid();
+  document.getElementById('createSkillOverlay').style.display='flex';
+}
+
+// =============================================
+// ITEM EDITOR
+// =============================================
+function updatePotionSectionVisibility(){
+  const t=document.getElementById('ci_type')?.value;
+  const s=document.getElementById('ci_potion_section');
+  if(s)s.style.display=(t==='potion')?'block':'none';
+}
+function updateHealTypeRows(){
+  const t=document.getElementById('ci_heal_type')?.value;
+  document.getElementById('ci_heal_flat_row').style.display=t==='flat'?'block':'none';
+  document.getElementById('ci_heal_dice_row').style.display=t==='dice'?'block':'none';
+  document.getElementById('ci_heal_pct_row').style.display=t==='percent'?'block':'none';
+}
+
+function openItemEditor(id){
+  editingItemId=id;
+  document.getElementById('ci-modal-title').textContent=id?'Edit Item':'Create Item';
+  if(id){
+    const item=ITEM_LIBRARY.find(i=>i.id===id);
+    if(item){
+      document.getElementById('ci_name').value=item.name;
+      document.getElementById('ci_type').value=item.type;
+      document.getElementById('ci_effect').value=item.effect||'';
+      document.getElementById('ci_stats').value=item.stats||'';
+      document.getElementById('ci_price').value=item.price||0;
+      document.getElementById('ci_heal_type').value=item.healType||'flat';
+      document.getElementById('ci_heal_flat').value=item.healFlat||10;
+      document.getElementById('ci_heal_dice').value=item.healDice||'1d4';
+      document.getElementById('ci_heal_pct').value=item.healPct||25;
+    }
+  } else {
+    ['ci_name','ci_effect','ci_stats'].forEach(fid=>{const el=document.getElementById(fid);if(el)el.value='';});
+    document.getElementById('ci_type').value='weapon';
+    document.getElementById('ci_price').value='10';
+    document.getElementById('ci_heal_type').value='flat';
+    document.getElementById('ci_heal_flat').value='10';
+    document.getElementById('ci_heal_dice').value='1d4';
+    document.getElementById('ci_heal_pct').value='25';
+  }
+  updatePotionSectionVisibility();updateHealTypeRows();
+  document.getElementById('createItemOverlay').style.display='flex';
+}
+
+// =============================================
+// LIBRARY / SHOP
+// =============================================
+function openLibrary(type){
+  libMode=type;libTab='all';
+  document.getElementById('lib-title').textContent=type==='skill'?'📖 Skill & Spell Library':'🛒 Item Shop';
+  document.getElementById('libraryOverlay').style.display='flex';
+  renderLibrary();
+}
+
+function renderLibrary(){
+  const tabsEl=document.getElementById('lib-tabs');
+  const bodyEl=document.getElementById('libraryBody');
+  bodyEl.innerHTML='';
+  const tc={atk:'badge-atk',heal:'badge-heal',buff:'badge-buff',debuff:'badge-debuff'};
+  if(libMode==='skill'){
+    tabsEl.innerHTML=['all','atk','heal','buff','debuff'].map(t=>`<button class="tab-btn ${libTab===t?'active':''}" data-libtab="${t}">${t==='all'?'All':t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('')
+      +`<button class="tab-btn" id="btn-new-skill" style="color:var(--primary);">+ Create</button>`;
+    Object.keys(SKILL_LIBRARY).forEach(key=>{
+      const s=SKILL_LIBRARY[key];
+      if(libTab!=='all'&&s.type!==libTab)return;
+      const learned=S.selected&&S.selected.skills.find(x=>x.id===key);
+      const learnHtml=S.selected?(learned?`<button disabled style="width:100%;">✓ Learned</button>`:
+        `<button class="primary" style="width:100%;" data-learn="${key}">Learn → ${S.selected.name}</button>`):
+        `<button disabled style="width:100%;">Select unit first</button>`;
+      const editHtml=`<button style="margin-top:4px;width:100%;" data-edit-skill="${key}">✏️ Edit Skill</button>`;
+      const originBadge=`<span style="font-size:9px;background:${s.originMode==='caster'?'#FFEBEE':'#E8EAF6'};color:${s.originMode==='caster'?'#C62828':'#283593'};padding:1px 5px;border-radius:4px;font-weight:700;">${s.originMode==='caster'?'🔥 Caster':'🎯 Tile'}</span>`;
+      const targetBadge=s.targetMode==='choose'?`<span style="font-size:9px;background:#E8F5E9;color:#2E7D32;padding:1px 5px;border-radius:4px;font-weight:700;">↔ Choose ${s.maxTargets||1}</span>`:'';
+      const status=s.statusName?`<div style="margin-top:3px;"><span class="status-tag" style="background:${s.statusColor||'#5C6BC0'};display:inline-block;">${s.statusName}</span></div>`:'';
+      bodyEl.innerHTML+=`<div class="skill-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h4>${s.name}</h4><span class="badge ${tc[s.type]||'badge-atk'}">${s.type}</span>
+        </div>
+        <div style="font-size:9px;color:#888;margin-bottom:4px;display:flex;gap:4px;flex-wrap:wrap;">
+          <span>Range: ${s.range}ft • Uses: ${s.uses}</span>${originBadge}${targetBadge}
+        </div>
+        <p style="font-size:11px;margin:4px 0;color:var(--txt2);">${s.desc}</p>
+        <p style="font-size:10px;font-weight:bold;margin:0;">${s.effect}</p>
+        ${status}
+        <div style="margin-top:8px;">${learnHtml}${editHtml}</div>
+      </div>`;
+    });
+  } else {
+    // SHOP view
+    tabsEl.innerHTML=['all','weapon','armor','accessory','potion','material'].map(t=>`<button class="tab-btn ${libTab===t?'active':''}" data-libtab="${t}">${t==='all'?'All Items':t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('')
+      +`<button class="tab-btn" id="btn-new-item" style="color:var(--primary);">+ Create Item</button>`;
+    ITEM_LIBRARY.forEach(item=>{
+      const isArmor=['head','chest','leggings','boots'].includes(item.type);
+      if(libTab!=='all'&&item.type!==libTab&&!(libTab==='armor'&&isArmor))return;
+      const isPotion=item.type==='potion';
+      const isMaterial=item.type==='material';
+      const typeBadge = isPotion 
+        ? `<span class="badge badge-potion">🧪 Potion</span>` 
+        : isMaterial 
+        ? `<span class="badge" style="background:#EFEBE9;color:#5D4037;border:1px solid #8D6E63;">💎 Material</span>`
+        : `<span class="badge badge-buff">${item.type}</span>`;
+        
+      let healInfo='';
+      if(isPotion){
+        const typeLabel={flat:`Heals flat <b>${item.healFlat||'?'} HP</b>`,dice:`Heals <b>${item.healDice||'?'}</b> (dice roll)`,percent:`Heals <b>${item.healPct||'?'}%</b> of Max HP`}[item.healType]||'';
+        healInfo=`<div style="margin-top:4px;padding:4px 8px;background:#fdf0ff;border-radius:4px;font-size:10px;color:#6A1B9A;">🧪 ${typeLabel}</div>`;
+      }
+      const unitGold=S.selected?S.selected.gold||0:0;
+      const canAfford=S.selected&&unitGold>=(item.price||0);
+      const buyBtn=S.selected
+        ?canAfford
+          ?`<button class="primary" style="flex:1;" data-shop-buy="${item.id}">🛒 Buy (${item.price||0}gp)</button>`
+          :`<button disabled style="flex:1;opacity:.5;" title="Not enough gold">💰 Need ${item.price||0}gp (have ${unitGold})</button>`
+        :`<button disabled style="flex:1;">Select unit first</button>`;
+      const editBtn=`<button style="flex:0;padding:6px 8px;" data-edit-item="${item.id}">✏️</button>`;
+      bodyEl.innerHTML+=`<div class="item-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h4>${item.name}</h4>${typeBadge}
+        </div>
+        <div class="item-meta">${item.type.toUpperCase()} • <span class="shop-price">💰 ${item.price||0} gp</span></div>
+        <p style="font-size:11px;margin:4px 0;color:var(--txt2);">${item.effect}</p>
+        ${item.stats?`<p style="font-size:10px;font-weight:bold;color:#3B6D11;">${item.stats}</p>`:''}
+        ${healInfo}
+        <div style="display:flex;gap:4px;margin-top:8px;">${buyBtn}${editBtn}</div>
+      </div>`;
+    });
+    // Show selected unit's gold at top of shop if selected
+    if(S.selected){
+      const goldBar=document.createElement('div');
+      goldBar.style.cssText='grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gold-bg);border:1px solid #F0D060;border-radius:8px;font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px;';
+      goldBar.innerHTML=`💰 ${S.selected.name}'s Gold: <strong style="font-size:15px;">${S.selected.gold||0} gp</strong>`;
+      bodyEl.prepend(goldBar);
+    }
+  }
+}
+
+// =============================================
+// TERRAIN PALETTE
+// =============================================
+function renderTerrainPalette(){
+  const p=document.getElementById('terrain-palette');if(!p)return;
+  p.innerHTML='';
+  customTerrainList.forEach(t=>{
+    const b=document.createElement('div');
+    b.className='terrain-swatch'+(activeTerrain===t?' active':'');b.title=t.name;
+    if(t.type==='color')b.style.backgroundColor=t.val;else b.style.backgroundImage=`url('${t.val}')`;
+    b.addEventListener('click',()=>{activeTerrain=t;S.tool='terrain-brush';renderTerrainPalette();});
+    p.appendChild(b);
+  });
+  const add=document.createElement('button');add.className='primary';add.style.padding='4px 8px';add.textContent='+ Add Image';
+  add.addEventListener('click',async()=>{
+    const url=await showPrompt('Paste image URL:','');
+    if(url){customTerrainList.push({type:'image',val:url,name:'Custom'});activeTerrain=customTerrainList[customTerrainList.length-1];S.tool='terrain-brush';renderTerrainPalette();}
+  });
+  p.appendChild(add);
+}
+
+function paintCell(x,y){
+  if(isNaN(x)||isNaN(y)||x<0||x>=BOARD_W||y<0||y>=BOARD_H)return;
+  if(S.tool==='custom')S.board[y][x]={type:'custom',image:document.getElementById('customTileImg').value||null,color:null};
+  else if(S.tool==='terrain-brush')S.board[y][x]={type:'custom',image:activeTerrain.type==='image'?activeTerrain.val:null,color:activeTerrain.type==='color'?activeTerrain.val:null};
+  else S.board[y][x]={type:S.tool,image:null,color:null};
+  renderBoard();
+}
+
+// =============================================
+// EQUIP MODAL (from equip tab — pick from bag or library)
+// =============================================
+function openEquipModal(slot){
+  equipSlot=slot;
+  const body=document.getElementById('equipBody');
+  const slotToTypes={mainHand:['weapon'],offHand:['weapon'],head:['head'],chest:['chest'],leggings:['leggings'],boots:['boots'],accessory:['acc1','acc2','acc3','acc4']};
+  const validSlots=slotToTypes[slot]||(slot.startsWith('acc')?['accessory']:['accessory']);
+  body.innerHTML=`<button class="danger" style="width:100%;margin-bottom:10px;" id="btn-unequip">Unequip this slot</button>
+  <p style="font-size:11px;color:var(--txt2);margin-bottom:8px;">Equip an item to <b>${slot}</b>:</p>`;
+  const u=S.selected;
+  if(u&&u.bag&&u.bag.length){
+    const bagItems=u.bag.filter(e=>{const it=ITEM_LIBRARY.find(i=>i.id===e.itemId);return it&&validTypes.includes(it.type)&&e.qty>0;});
+    if(bagItems.length){
+      body.innerHTML+=`<div style="font-size:10px;font-weight:700;color:var(--txt2);margin-bottom:4px;">FROM YOUR BAG:</div>`;
+      bagItems.forEach(e=>{
+        const it=ITEM_LIBRARY.find(i=>i.id===e.itemId);
+        body.innerHTML+=`<div class="item-card" style="cursor:pointer;margin-bottom:6px;border-color:var(--primary);" data-equip-item="${it.id}">
+          <h4>${it.name} <span style="font-size:10px;color:#888;">x${e.qty}</span></h4>
+          <p style="font-size:10px;">${it.effect} ${it.stats?'| '+it.stats:''}</p>
+        </div>`;
+      });
+    }
+  }
+  body.innerHTML+=`<div style="font-size:10px;font-weight:700;color:var(--txt2);margin:8px 0 4px;">ALL LIBRARY ITEMS:</div>`;
+  ITEM_LIBRARY.filter(i=>validTypes.includes(i.type)).forEach(i=>{
+    body.innerHTML+=`<div class="item-card" style="cursor:pointer;margin-bottom:6px;" data-equip-item="${i.id}">
+      <h4>${i.name}</h4><p style="font-size:10px;">${i.effect} ${i.stats?'| '+i.stats:''}</p>
+    </div>`;
+  });
+  document.getElementById('eq-title').textContent='Equip: '+slot;
+  document.getElementById('equipOverlay').style.display='flex';
+}
+
+// =============================================
+// SAVE / LOAD / EXPORT / RESIZE
+// =============================================
+function saveBoard(){
+  const slot=document.getElementById('saveSlot').value;
+  localStorage.setItem('dnd_slot_'+slot,JSON.stringify({w:BOARD_W,h:BOARD_H,b:S.board}));
+  addLog('Saved to '+slot+'.');
+}
+function loadBoard(){
+  const slot=document.getElementById('saveSlot').value;
+  const raw=localStorage.getItem('dnd_slot_'+slot);
+  if(raw){saveHist();const d=JSON.parse(raw);BOARD_W=d.w;BOARD_H=d.h;S.board=d.b;renderBoard();addLog('Loaded '+slot+'.');}
+  else addLog(slot+' is empty.');
+}
+async function resizeBoard(){
+  const res=await showPrompt('Width,Height (e.g. 30,20):',BOARD_W+','+BOARD_H);
+  if(!res)return;
+  const pts=res.trim().split(/[,xX ]/);
+  if(pts.length>=2){
+    const w=parseInt(pts[0]),h=parseInt(pts[1]);
+    if(w>0&&h>0&&w<=60&&h<=40){saveHist();BOARD_W=w;BOARD_H=h;initBoard();S.units=[];S.selected=null;renderBoard();updatePanel();renderRoster();addLog('Resized to '+w+'x'+h+'.');}
+    else addLog('Invalid size. Max 60x40.');
+  }else addLog('Invalid format. Use W,H.');
+}
+function exportAI(){
+  const lines=[];
+  lines.push('[DnD VTT '+BOARD_W+'x'+BOARD_H+' board. Each cell=5ft. Coord (x,y) from top-left.]');
+  const walls=[],hazards=[],customs=[];
+  for(let y=0;y<BOARD_H;y++)for(let x=0;x<BOARD_W;x++){
+    const c=S.board[y][x];
+    if(c.type==='wall')walls.push('('+x+','+y+')');
+    else if(c.type==='hazard')hazards.push('('+x+','+y+')');
+    else if(c.type==='custom'&&(c.image||c.color))customs.push('('+x+','+y+')');
+  }
+  if(walls.length)lines.push('WALLS:'+walls.join(' '));
+  if(hazards.length)lines.push('HAZARDS:'+hazards.join(' '));
+  if(customs.length)lines.push('TERRAIN:'+customs.join(' '));
+  if(!S.units.length){lines.push('UNITS:none');}
+  else{
+    lines.push('UNITS:');
+    S.units.forEach(u=>{
+      let ln=u.name+' @('+u.x+','+u.y+') HP:'+u.hp+'/'+u.maxHp+' AC:'+u.ac+' Spd:'+u.speed+'ft';
+      if(u.gold)ln+=' GP:'+u.gold;
+      lines.push(' '+ln);
+      const st=u.stats;
+      lines.push('  S:'+st.str+' D:'+st.dex+' C:'+st.con+' I:'+st.int+' A:'+st.agi);
+      const inv=u.inventory||{};
+      const equipped=Object.entries(inv).filter(([,v])=>v).map(([k,v])=>k+'='+v.name+(v.stats?' ('+v.stats+')':''));
+      if(equipped.length)lines.push('  EQUIP:'+equipped.join(', '));
+      if(u.skills&&u.skills.length){
+        const skStr=u.skills.map(s=>{const d=SKILL_LIBRARY[s.id];return d?(d.name+'['+s.usesLeft+'/'+d.uses+']'):null;}).filter(Boolean).join(', ');
+        if(skStr)lines.push('  SKILLS:'+skStr);
+      }
+      if(u.bag&&u.bag.length){
+        const bagStr=u.bag.map(e=>{const it=ITEM_LIBRARY.find(i=>i.id===e.itemId);return it?it.name+(e.qty>1?'x'+e.qty:''):null;}).filter(Boolean).join(', ');
+        if(bagStr)lines.push('  BAG:'+bagStr);
+      }
+      if(u.buffs&&u.buffs.length)lines.push('  STATUS:'+u.buffs.map(b=>b.name).join(', '));
+    });
+  }
+  const usedSkillIds=[...new Set(S.units.flatMap(u=>u.skills.map(s=>s.id)))];
+  if(usedSkillIds.length){
+    lines.push('SKILL_DEFS:');
+    usedSkillIds.forEach(id=>{
+      const s=SKILL_LIBRARY[id];if(!s)return;
+      lines.push(' '+s.name+'|'+s.type+'|rng:'+s.range+'ft|'+s.effect+(s.aoe?'|aoe:'+s.aoe+'ft':'')+(s.targetMode==='choose'?'|pick:'+s.maxTargets:''));
+    });
+  }
+  lines.push('[END. You are AI DM. Resolve actions, roll dice, describe outcomes. Ask for rolls when needed.]');
+  document.getElementById('aiExportText').value=lines.join('\n');
+  document.getElementById('aiExportOverlay').style.display='flex';
+}
+
+// =============================================
+// EVENT DELEGATION
+// =============================================
+let boardPainting=false;
+
+document.addEventListener('click',async e=>{
+  const t=e.target;
+
+  // Header
+  if(t.id==='btn-save'){saveBoard();return;}
+  if(t.id==='btn-load'){loadBoard();return;}
+  if(t.id==='btn-resize'){await resizeBoard();return;}
+  if(t.id==='btn-export'){exportAI();return;}
+  if(t.id==='btn-spells'){openLibrary('skill');return;}
+  if(t.id==='btn-items'){openLibrary('item');return;}
+  if(t.id==='btn-undo'){undo();return;}
+  if(t.id==='btn-clear'){saveHist();initBoard();S.units=[];S.selected=null;S.actionMode=null;S.highlights=[];renderBoard();updatePanel();renderRoster();addLog('Board cleared.');return;}
+
+  // Target chooser bar buttons
+  if(t.id==='btn-confirm-targets'){await confirmChooseTargets();return;}
+  if(t.id==='btn-cancel-targets'){cancelChooseTargets();addLog('Skill targeting cancelled.');return;}
+
+  // Close modals
+  if(t.id==='btn-close-lib'){document.getElementById('libraryOverlay').style.display='none';return;}
+  if(t.id==='btn-close-create-item'){document.getElementById('createItemOverlay').style.display='none';editingItemId=null;return;}
+  if(t.id==='btn-close-skill'){document.getElementById('createSkillOverlay').style.display='none';editingSkillId=null;return;}
+  if(t.id==='btn-close-equip'){document.getElementById('equipOverlay').style.display='none';return;}
+  if(t.id==='btn-close-ai'){document.getElementById('aiExportOverlay').style.display='none';return;}
+  if(t.id==='btn-copy-ai'){navigator.clipboard.writeText(document.getElementById('aiExportText').value).then(()=>addLog('Copied.')).catch(()=>addLog('Copy failed.'));return;}
+
+  // Library tabs
+  if(t.dataset.libtab){libTab=t.dataset.libtab;renderLibrary();return;}
+  if(t.id==='btn-new-skill'){openSkillEditor(null);return;}
+  if(t.id==='btn-new-item'){openItemEditor(null);return;}
+  if(t.dataset.editSkill){openSkillEditor(t.dataset.editSkill);return;}
+  if(t.dataset.editItem){openItemEditor(t.dataset.editItem);return;}
+
+  // Learn skill
+  if(t.dataset.learn){
+    if(S.selected){const sk=SKILL_LIBRARY[t.dataset.learn];if(sk){S.selected.skills.push({id:t.dataset.learn,usesLeft:sk.uses});renderLibrary();updatePanel();addLog(S.selected.name+' learned '+sk.name+'.');}}
+    return;
+  }
+
+  // SHOP BUY
+  if(t.dataset.shopBuy){
+    const item=ITEM_LIBRARY.find(i=>i.id===t.dataset.shopBuy);
+    if(!item||!S.selected)return;
+    const unit=S.selected;
+    const price=item.price||0;
+    if((unit.gold||0)<price){await showAlert(`<b>${unit.name}</b> doesn't have enough gold!<br>Needs <b>${price}gp</b>, has <b>${unit.gold||0}gp</b>.`);return;}
+    saveHist();
+    adjustGold(unit,-price);
+    addToBag(unit,item,1);
+    addLog(unit.name+' bought '+item.name+' for '+price+'gp. Remaining: '+(unit.gold)+'gp.');
+    renderLibrary();updatePanel();
+    return;
+  }
+
+  // Origin mode toggle
+  if(t.id==='origin-tile'){setOriginMode('tile');return;}
+  if(t.id==='origin-caster'){setOriginMode('caster');return;}
+
+  // Save skill
+  if(t.id==='btn-save-skill'){
+    const name=document.getElementById('cs_name').value.trim();
+    if(!name){await showAlert('Please enter a skill name.');return;}
+    const id=editingSkillId||('custom_'+Date.now());
+    const hasShape=skillShape.some(row=>row.some(c=>c));
+    const targetMode=document.querySelector('input[name="cs_target_mode"]:checked')?.value||'center';
+    SKILL_LIBRARY[id]={
+      name,type:document.getElementById('cs_type').value,
+      range:+document.getElementById('cs_range').value||30,
+      uses:+document.getElementById('cs_uses').value||2,
+      desc:document.getElementById('cs_desc').value,effect:document.getElementById('cs_effect').value,
+      aoe:0,shape:hasShape?JSON.parse(JSON.stringify(skillShape)):null,
+      originMode:skillOriginMode,targetMode,
+      maxTargets:targetMode==='choose'?(+document.getElementById('cs_max_targets').value||1):1,
+      statusName:document.getElementById('cs_status_name').value,
+      statusDesc:document.getElementById('cs_status_desc').value,
+      statusColor:document.getElementById('cs_status_color').value,custom:true
+    };
+    addLog('Skill "'+name+'" saved.');
+    // Sync usesLeft cap for units that already know this skill
+    const newUses=+document.getElementById('cs_uses').value||2;
+    S.units.forEach(u=>{
+      const ls=u.skills.find(s=>s.id===id);
+      if(ls)ls.usesLeft=Math.min(ls.usesLeft,newUses);
+    });
+    document.getElementById('createSkillOverlay').style.display='none';editingSkillId=null;renderLibrary();updatePanel();return;
+  }
+  if(t.id==='cs_delete_btn'){
+    if(editingSkillId){
+      const skName=SKILL_LIBRARY[editingSkillId]?.name||'this skill';
+      const yes=await showConfirm(`Delete <b>${skName}</b>?<br><span style="font-size:11px;color:#888;">This will remove it from all characters.</span>`,'🗑️ Delete');
+      if(yes){
+        delete SKILL_LIBRARY[editingSkillId];
+        S.units.forEach(u=>{u.skills=u.skills.filter(s=>s.id!==editingSkillId);});
+        addLog('Skill "'+skName+'" deleted.');document.getElementById('createSkillOverlay').style.display='none';editingSkillId=null;renderLibrary();updatePanel();renderBoard();
+      }
+    }return;
+  }
+
+  // Save item
+  if(t.id==='btn-save-item'){
+    const iname=document.getElementById('ci_name').value.trim();
+    if(!iname){await showAlert('Please enter an item name.');return;}
+    const itype=document.getElementById('ci_type').value;
+    const isPotion=itype==='potion';
+    const healType=document.getElementById('ci_heal_type').value;
+    const newItem={
+      id:editingItemId||('i_'+Date.now()),
+      name:iname,type:itype,
+      effect:document.getElementById('ci_effect').value,
+      stats:document.getElementById('ci_stats').value,
+      price:parseInt(document.getElementById('ci_price').value)||0,
+      ...(isPotion?{
+        healType,
+        healFlat:parseInt(document.getElementById('ci_heal_flat').value)||10,
+        healDice:document.getElementById('ci_heal_dice').value||'1d4',
+        healPct:parseInt(document.getElementById('ci_heal_pct').value)||25
+      }:{})
+    };
+    if(editingItemId){
+      const idx=ITEM_LIBRARY.findIndex(i=>i.id===editingItemId);
+      if(idx>=0)ITEM_LIBRARY[idx]=newItem;
+    }else{ITEM_LIBRARY.push(newItem);}
+    addLog('Item "'+iname+'" saved to shop.');
+    document.getElementById('createItemOverlay').style.display='none';editingItemId=null;renderLibrary();return;
+  }
+
+  // Shape presets
+  if(t.id==='sp-none'){shapePreset('none');return;}
+  if(t.id==='sp-self'){shapePreset('self');return;}
+  if(t.id==='sp-r1'){shapePreset('r1');return;}
+  if(t.id==='sp-r2'){shapePreset('r2');return;}
+  if(t.id==='sp-r3'){shapePreset('r3');return;}
+  if(t.id==='sp-line'){shapePreset('line');return;}
+  if(t.id==='sp-cone'){shapePreset('cone');return;}
+
+  // Equip slot click (from equip tab)
+  const equipSlotEl=t.closest('[data-equip-slot]');
+  if(equipSlotEl&&!t.dataset.unequipSlot){openEquipModal(equipSlotEl.dataset.equipSlot);return;}
+
+  // Unequip button
+  if(t.dataset.unequipSlot){
+    saveHist();
+    if(S.selected)S.selected.inventory[t.dataset.unequipSlot]=null;
+    addLog(S.selected.name+' unequipped '+t.dataset.unequipSlot+'.');
+    updatePanel();return;
+  }
+
+  if(t.id==='btn-unequip'){saveHist();if(S.selected&&equipSlot)S.selected.inventory[equipSlot]=null;document.getElementById('equipOverlay').style.display='none';updatePanel();return;}
+
+  // Equip item from modal (clicked card or child inside card)
+  const equipItemEl=t.closest('[data-equip-item]');
+  if(equipItemEl){
+    saveHist();
+    if(S.selected&&equipSlot){S.selected.inventory[equipSlot]=ITEM_LIBRARY.find(i=>i.id===equipItemEl.dataset.equipItem)||null;}
+    document.getElementById('equipOverlay').style.display='none';updatePanel();return;
+  }
+
+  // Bag-equip-slot selection (from openEquipFromBag flow) — use closest() so child clicks work
+  const bagEquipSlotEl=t.closest('[data-bag-equip-slot]');
+  if(bagEquipSlotEl){
+    const slot=bagEquipSlotEl.dataset.bagEquipSlot;
+    const bagIdx=+bagEquipSlotEl.dataset.bagEquipItemIdx;
+    const u=S.selected;
+    if(u&&u.bag&&u.bag[bagIdx]){
+      saveHist();
+      const item=ITEM_LIBRARY.find(i=>i.id===u.bag[bagIdx].itemId);
+      if(item)u.inventory[slot]=item;
+      document.getElementById('equipOverlay').style.display='none';
+      addLog(u.name+' equipped '+item.name+' to '+slot+'.');
+      updatePanel();
+    }
+    return;
+  }
+
+  // Bag: quick add toggle
+  if(t.id==='btn-quick-add-bag'){
+    const p=document.getElementById('quick-add-bag-panel');
+    if(p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    return;
+  }
+
+  // Bag: confirm quick add
+  if(t.id==='btn-confirm-qa'){
+    if(!S.selected) return;
+    const name = document.getElementById('qa_name').value.trim();
+    if(!name){ await showAlert('Please enter an item name.'); return; }
+    const qty = parseInt(document.getElementById('qa_qty').value) || 1;
+    const type = document.getElementById('qa_type').value;
+    
+    let item = ITEM_LIBRARY.find(i => i.name.toLowerCase() === name.toLowerCase());
+    if(!item) {
+      item = { id: 'qa_' + Date.now(), name: name, type: type, effect: 'Gathered item', stats: '', price: 0 };
+      if(type === 'potion'){ item.healType = 'flat'; item.healFlat = 10; }
+      ITEM_LIBRARY.push(item);
+    }
+    saveHist();
+    addToBag(S.selected, item, qty);
+    addLog(`${S.selected.name} gathered/added ${qty}x ${item.name}.`);
+    updatePanel();
+    return;
+  }
+
+  // Brush tools
+  const toolBtn=t.closest('.tool');
+  if(toolBtn){
+    document.querySelectorAll('.tool').forEach(b=>b.classList.remove('active'));
+    toolBtn.classList.add('active');S.tool=toolBtn.dataset.tool;
+    const pal=document.getElementById('terrain-palette');const cust=document.getElementById('customTileImg');
+    if(S.tool==='terrain'){pal.style.display='flex';cust.style.display='none';}
+    else{pal.style.display='none';cust.style.display=S.tool==='custom'?'block':'none';}
+    return;
+  }
+
+  // Panel buttons
+  if(t.id==='btn-edit-unit'){S.editing=true;updatePanel();return;}
+  if(t.id==='btn-remove-unit'){saveHist();S.units=S.units.filter(u=>u!==S.selected);S.selected=null;S.actionMode=null;S.highlights=[];renderBoard();updatePanel();renderRoster();return;}
+  if(t.id==='btn-save-edit'){
+    saveHist();const u=S.selected;
+    u.color=document.getElementById('e_color').value;
+    u.image=document.getElementById('e_image').value||null;
+    u.maxHp=Math.max(1,+document.getElementById('e_hp').value||1);
+    u.ac=+document.getElementById('e_ac').value||0;
+    u.speed=+document.getElementById('e_speed').value||0;
+    u.stats={str:+document.getElementById('e_str').value||0,dex:+document.getElementById('e_dex').value||0,con:+document.getElementById('e_con').value||0,int:+document.getElementById('e_int').value||0,agi:+document.getElementById('e_agi').value||0};
+    if(u.hp>u.maxHp)u.hp=u.maxHp;
+    S.editing=false;updatePanel();renderBoard();renderRoster();return;
+  }
+
+  // HP buttons
+  const hpBtn=t.closest('.btn-hp');
+  if(hpBtn&&S.selected){saveHist();S.selected.hp=Math.min(S.selected.maxHp,Math.max(0,S.selected.hp+(+hpBtn.dataset.amt)));updatePanel();renderBoard();return;}
+
+  // Tabs
+  if(t.dataset.tab){S.activeTab=t.dataset.tab;updatePanel();return;}
+
+  // Action mode buttons
+  if(t.dataset.mode){setMode(t.dataset.mode);return;}
+
+  // Edit skill directly from panel skill list
+  if(t.dataset.panelEditSkill){
+    openSkillEditor(t.dataset.panelEditSkill);
+    return;
+  }
+
+  // Skill select from list
+  if(t.dataset.learnId){
+    const id=t.dataset.learnId;const ls=S.selected?.skills.find(s=>s.id===id);
+    if(ls&&ls.usesLeft>0){
+      // Toggle: clicking same skill again deselects it
+      if(S.activeSkillId===id){S.actionMode=null;S.activeSkillId=null;S.highlights=[];S.castConfirmTile=null;S.aoeHoverTile=null;}
+      else{S.actionMode='skill';S.activeSkillId=id;S.castConfirmTile=null;S.aoeHoverTile=null;calcHighlights();}
+      updatePanel();renderBoard();
+    }
+    else if(ls)addLog('No uses left for '+SKILL_LIBRARY[id]?.name+'.');
+    return;
+  }
+
+  // Buff remove
+  if(t.dataset.buffIdx!==undefined&&t.classList.contains('buff-remove')){
+    if(S.selected&&S.selected.buffs)S.selected.buffs.splice(+t.dataset.buffIdx,1);renderBoard();updatePanel();return;
+  }
+  if(t.id==='btn-open-add-buff'){const p=document.getElementById('add-buff-panel');if(p)p.style.display=p.style.display==='none'?'block':'none';return;}
+  if(t.id==='btn-apply-buff'){
+    if(S.selected){
+      if(!S.selected.buffs)S.selected.buffs=[];
+      const n=document.getElementById('manual_buff_name').value.trim()||'Status';
+      S.selected.buffs.push({name:n,desc:document.getElementById('manual_buff_desc').value.trim(),color:document.getElementById('manual_buff_color').value});
+      addLog('Applied "'+n+'" to '+S.selected.name+'.');renderBoard();updatePanel();
+    }return;
+  }
+
+  // Bag tab: open shop
+  if(t.id==='btn-open-shop-for-bag'){openLibrary('item');return;}
+
+  // Bag: use potion
+  if(t.dataset.usePotion!==undefined){
+    await usePotionFromBag(S.selected,+t.dataset.usePotion);return;
+  }
+
+  // Bag: equip from bag
+  if(t.dataset.bagEquip!==undefined){
+    openEquipFromBag(S.selected,+t.dataset.bagEquip);return;
+  }
+
+  // Bag: remove item
+  if(t.dataset.bagRemove!==undefined){
+    saveHist();removeFromBag(S.selected,+t.dataset.bagRemove);updatePanel();return;
+  }
+
+  // Gold: set
+  if(t.id==='btn-set-gold'){
+    const v=parseInt(document.getElementById('gold-display')?.value);
+    if(!isNaN(v))setGold(S.selected,v);return;
+  }
+
+  // Gold: quick adjust
+  if(t.dataset.goldAdj){
+    const delta=parseInt(t.dataset.goldAdj);adjustGold(S.selected,delta);return;
+  }
+
+  // Gold: earn custom
+  if(t.id==='btn-gold-earn'){
+    const v=parseInt(document.getElementById('gold-custom-amt')?.value)||0;
+    if(v>0){adjustGold(S.selected,v);document.getElementById('gold-custom-amt').value='';}
+    return;
+  }
+  if(t.id==='btn-gold-spend'){
+    const v=parseInt(document.getElementById('gold-custom-amt')?.value)||0;
+    if(v>0){
+      const u=S.selected;
+      if((u.gold||0)<v){await showAlert('Not enough gold! Has '+(u.gold||0)+'gp.');return;}
+      adjustGold(u,-v);document.getElementById('gold-custom-amt').value='';
+    }
+    return;
+  }
+
+  // Board cell click
+  const cell=t.closest('.cell');
+  if(cell){
+    const x=+cell.dataset.x,y=+cell.dataset.y;
+    if(isNaN(x)||isNaN(y))return;
+
+    // If we're in choose-target mode
+    if(S.choosingTargets){
+      const unit=S.units.find(u=>u.x===x&&u.y===y);
+      if(unit&&unit!==S.selected){
+        // Toggle target
+        const existing=S.chosenTargets.findIndex(c=>c.x===x&&c.y===y);
+        if(existing>=0){
+          S.chosenTargets.splice(existing,1);
+          addLog('Deselected '+unit.name+'.');
+        } else if(S.chosenTargets.length<S.chooseMax){
+          S.chosenTargets.push({x,y});
+          addLog('Selected '+unit.name+' ('+(S.chosenTargets.length)+'/'+S.chooseMax+').');
+        } else {
+          addLog('Max targets reached ('+S.chooseMax+'). Click Confirm or deselect a target.');
+        }
+        renderBoard();
+      }
+      return;
+    }
+
+    const hl=S.highlights.find(h=>h.x===x&&h.y===y);
+    const unit=S.units.find(u=>u.x===x&&u.y===y);
+    if(S.actionMode){
+      // SKILL MODE: two-step confirm (first click = set confirm tile; second click on center = cast)
+      if(S.actionMode==='skill'&&S.activeSkillId&&hl){
+        const sk=SKILL_LIBRARY[S.activeSkillId];
+        const targetMode=sk?sk.targetMode||'center':'center';
+        if(targetMode!=='choose'){
+          // If already has a confirm tile and player clicked the same center → CAST
+          if(S.castConfirmTile&&S.castConfirmTile.x===x&&S.castConfirmTile.y===y){
+            S.castConfirmTile=null;S.aoeHoverTile=null;
+            try{await execAction(x,y,hl.type);}catch(err){addLog('Error: '+err.message);S.actionMode=null;S.highlights=[];renderBoard();updatePanel();}
+          } else {
+            // First click: set confirm tile and show AoE indicator
+            S.castConfirmTile={x,y};
+            addLog('⚡ '+sk.name+' ready — click the glowing tile again to cast!');
+            renderBoard();
+          }
+          return;
+        }
+      }
+      if(hl){try{await execAction(x,y,hl.type);}catch(err){addLog('Error: '+err.message);S.actionMode=null;S.highlights=[];renderBoard();updatePanel();}}
+      else{S.actionMode=null;S.activeSkillId=null;S.highlights=[];S.showSkills=false;S.castConfirmTile=null;S.aoeHoverTile=null;renderBoard();updatePanel();}
+      return;
+    }
+    if(unit){S.selected=unit;S.editing=false;S.activeTab='core';updatePanel();renderBoard();renderRoster();return;}
+  }
+});
+
+// Bag qty change
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.bagIdx!==undefined&&t.classList.contains('bag-qty')){
+    const u=S.selected;if(!u||!u.bag)return;
+    const idx=+t.dataset.bagIdx;
+    const val=Math.max(0,parseInt(t.value)||0);
+    if(u.bag[idx])u.bag[idx].qty=val;
+    if(val===0)u.bag.splice(idx,1);
+    updatePanel();return;
+  }
+  if(t.id==='ci_type'){updatePotionSectionVisibility();return;}
+  if(t.id==='ci_heal_type'){updateHealTypeRows();return;}
+  if(t.name==='cs_target_mode'){updateTargetModeUI();return;}
+});
+
+// Board painting
+document.getElementById('board').addEventListener('mousedown',e=>{
+  if(!S.actionMode&&!S.choosingTargets){const cell=e.target.closest('.cell');if(cell){boardPainting=true;paintCell(+cell.dataset.x,+cell.dataset.y);}}
+});
+document.addEventListener('mouseup',()=>{boardPainting=false;});
+document.getElementById('board').addEventListener('mouseover',e=>{
+  if(boardPainting&&!S.actionMode&&!S.choosingTargets){const cell=e.target.closest('.cell');if(cell)paintCell(+cell.dataset.x,+cell.dataset.y);}
+  // AoE hover preview in skill mode (only before confirm is locked)
+  if(S.actionMode==='skill'&&S.activeSkillId&&!S.castConfirmTile){
+    const cell=e.target.closest('.cell');
+    if(cell){
+      const nx=+cell.dataset.x,ny=+cell.dataset.y;
+      if(!S.aoeHoverTile||S.aoeHoverTile.x!==nx||S.aoeHoverTile.y!==ny){
+        S.aoeHoverTile={x:nx,y:ny};
+        renderBoard();
+      }
+    }
+  }
+});
+document.getElementById('board').addEventListener('mouseleave',()=>{
+  if(S.actionMode==='skill'&&S.aoeHoverTile&&!S.castConfirmTile){
+    S.aoeHoverTile=null;renderBoard();
+  }
+});
+
+// Skill editor live listeners
+document.getElementById('cs_type').addEventListener('change',updateSkillTypeHint);
+document.getElementById('cs_status_name').addEventListener('input',updateStatusPreview);
+document.getElementById('cs_status_color').addEventListener('input',updateStatusPreview);
+document.querySelectorAll('input[name="cs_target_mode"]').forEach(r=>r.addEventListener('change',updateTargetModeUI));
+
+// Deploy unit
+document.getElementById('btn-add-unit').addEventListener('click',()=>{
+  saveHist();
+  const hp=Math.max(1,+document.getElementById('c_hp').value||30);
+  const unit={
+    id:Date.now(),
+    name:document.getElementById('c_name').value.trim()||'Unit',
+    image:document.getElementById('c_image').value.trim()||null,
+    color:document.getElementById('c_color').value,
+    maxHp:hp,hp,
+    ac:+document.getElementById('c_ac').value||10,
+    speed:+document.getElementById('c_speed').value||30,
+    attackRange:+document.getElementById('c_range').value||5,
+    stats:{str:+document.getElementById('c_str').value||10,dex:+document.getElementById('c_dex').value||10,con:+document.getElementById('c_con').value||10,int:+document.getElementById('c_int').value||10,agi:+document.getElementById('c_agi').value||10},
+    skills:[],buffs:[],bag:[],gold:0,
+    inventory:{head:null,chest:null,leggings:null,boots:null,mainHand:null,offHand:null,acc1:null,acc2:null,acc3:null,acc4:null},
+    x:Math.floor(BOARD_W/2),y:Math.floor(BOARD_H/2)
+  };
+  let attempts=0;
+  while(S.units.find(u=>u.x===unit.x&&u.y===unit.y)&&attempts<200){unit.x=(unit.x+1)%BOARD_W;if(unit.x===0)unit.y=(unit.y+1)%BOARD_H;attempts++;}
+  S.units.push(unit);S.selected=unit;
+  addLog('Deployed '+unit.name+' at ('+unit.x+','+unit.y+'). Gold: 0gp.');
+  renderBoard();updatePanel();renderRoster();
+});
+
+// =============================================
+// INIT
+// =============================================
+initBoard();
+renderBoard();
+renderTerrainPalette();
+renderRoster();
+</script>
+</body>
+</html>

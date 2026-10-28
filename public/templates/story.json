@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "drowned-relay-warning",
+  "chapter": 2,
+  "title": "The Drowned Relay",
+  "description": "A bronze warning trembles through the relay wheel.",
+  "kind": "exploration",
+  "objectiveId": "reach-the-bell-vault",
+  "requiresFacts": [
+    "enteredRelay"
+  ],
+  "choices": [
+    {
+      "id": "inspect-the-wheel",
+      "label": "Inspect the wheel",
+      "consequenceHint": "Look for a safer passage.",
+      "eventId": "relay-wheel-inspected"
+    }
+  ],
+  "encounterTag": "relay-guards",
+  "rewardTableId": "relay-cache"
+}

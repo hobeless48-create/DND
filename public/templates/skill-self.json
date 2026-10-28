@@ -1,0 +1,38 @@
+{
+  "id": "template-self",
+  "name": "self template",
+  "description": "self template: a level 1 shield technique.",
+  "level": 1,
+  "resolution": "automatic",
+  "saveStat": "dex",
+  "halfOnSave": true,
+  "targeting": {
+    "shape": "self",
+    "rangeTiles": 6,
+    "radiusTiles": 2,
+    "lengthTiles": 5,
+    "widthTiles": 1,
+    "angleDegrees": 60,
+    "metric": "euclidean",
+    "team": "self",
+    "friendlyFire": false,
+    "requiresLOS": true
+  },
+  "effects": [
+    {
+      "op": "shield",
+      "dice": "1d6+0",
+      "stat": "int",
+      "coefficient": 1
+    }
+  ],
+  "maxTargets": 1,
+  "usesPerEncounter": 6,
+  "cooldownTurns": 1,
+  "resourceCost": 2,
+  "visual": {
+    "color": "#d6ad63",
+    "style": "pulse",
+    "durationMs": 450
+  }
+}

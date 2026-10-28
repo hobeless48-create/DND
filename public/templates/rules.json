@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "difficulty": "normal",
+  "maxPlayerLevel": 10,
+  "skillsPerLevel": 5,
+  "skillsChosenPerLevel": 2,
+  "maxPartySize": 4,
+  "defenseScaling": "raw",
+  "levelHpGrowth": 0.18,
+  "levelDamageGrowth": 0.1,
+  "difficulties": {
+    "easy": {
+      "regularLevelOffset": -1,
+      "bossLevelOffset": 0,
+      "statMultiplier": 0.9,
+      "minimumMonsters": 1,
+      "countPerHero": 1,
+      "countOffset": -1
+    },
+    "normal": {
+      "regularLevelOffset": 0,
+      "bossLevelOffset": 0,
+      "statMultiplier": 1,
+      "minimumMonsters": 2,
+      "countPerHero": 1,
+      "countOffset": 0
+    },
+    "hard": {
+      "regularLevelOffset": 0,
+      "bossLevelOffset": 1,
+      "statMultiplier": 1.2,
+      "minimumMonsters": 3,
+      "countPerHero": 1,
+      "countOffset": 1
+    }
+  }
+}

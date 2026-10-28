@@ -1,0 +1,38 @@
+{
+  "id": "template-cross",
+  "name": "cross template",
+  "description": "cross template: a level 1 damage technique.",
+  "level": 1,
+  "resolution": "attack",
+  "saveStat": "dex",
+  "halfOnSave": true,
+  "targeting": {
+    "shape": "cross",
+    "rangeTiles": 6,
+    "radiusTiles": 2,
+    "lengthTiles": 5,
+    "widthTiles": 1,
+    "angleDegrees": 60,
+    "metric": "euclidean",
+    "team": "enemy",
+    "friendlyFire": false,
+    "requiresLOS": true
+  },
+  "effects": [
+    {
+      "op": "damage",
+      "dice": "1d4",
+      "stat": "int",
+      "coefficient": 0
+    }
+  ],
+  "maxTargets": 4,
+  "usesPerEncounter": 6,
+  "cooldownTurns": 1,
+  "resourceCost": 2,
+  "visual": {
+    "color": "#d6ad63",
+    "style": "pulse",
+    "durationMs": 450
+  }
+}

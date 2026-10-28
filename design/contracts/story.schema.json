@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "chapter": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 650
+    },
+    "kind": {
+      "enum": [
+        "exploration",
+        "social",
+        "combat",
+        "boss",
+        "rest",
+        "resolution"
+      ]
+    },
+    "objectiveId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "requiresFacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+      },
+      "minItems": 0,
+      "maxItems": 12
+    },
+    "choices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,63}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "consequenceHint": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "eventId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,63}$"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "consequenceHint",
+          "eventId"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 4
+    },
+    "encounterTag": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "rewardTableId": {
+      "type": "string",
+      "maxLength": 64
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "chapter",
+    "title",
+    "description",
+    "kind",
+    "objectiveId",
+    "requiresFacts",
+    "choices",
+    "encounterTag",
+    "rewardTableId"
+  ],
+  "additionalProperties": false
+}

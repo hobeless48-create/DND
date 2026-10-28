@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "slot": {
+      "enum": [
+        "weapon",
+        "armor",
+        "accessory",
+        "consumable",
+        "quest"
+      ]
+    },
+    "rarity": {
+      "enum": [
+        "common",
+        "uncommon",
+        "rare",
+        "unique"
+      ]
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "value": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "stackLimit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 99
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stat": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "operation": {
+            "enum": [
+              "flat",
+              "percent"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "minimum": -30,
+            "maximum": 30
+          }
+        },
+        "required": [
+          "stat",
+          "operation",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 4
+    },
+    "grantedSkillIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{1,63}$"
+      },
+      "minItems": 0,
+      "maxItems": 3
+    },
+    "consumedOnUse": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "description",
+    "slot",
+    "rarity",
+    "level",
+    "value",
+    "stackLimit",
+    "modifiers",
+    "grantedSkillIds",
+    "consumedOnUse"
+  ],
+  "additionalProperties": false
+}

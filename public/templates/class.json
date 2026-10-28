@@ -1,0 +1,3789 @@
+{
+  "schemaVersion": 1,
+  "id": "clockwork-warden",
+  "name": "Clockwork Warden",
+  "concept": "A keeper of moving fortresses who fights with spring-loaded tools and signal magic. Offline example; new player concepts are authored by DeepSeek.",
+  "primaryStat": "int",
+  "stats": {
+    "str": 10,
+    "dex": 13,
+    "con": 14,
+    "int": 15,
+    "wis": 12,
+    "cha": 8
+  },
+  "customStats": [
+    {
+      "id": "precision",
+      "label": "Precision",
+      "base": 12,
+      "perLevel": 0.5
+    }
+  ],
+  "base": {
+    "hp": 30,
+    "ac": 14,
+    "speed": 6,
+    "attackDice": "1d6",
+    "weapon": "Signal spanner",
+    "rangeTiles": 4,
+    "resourceName": "Pressure",
+    "resourceMax": 20,
+    "resourceRegen": 2
+  },
+  "growth": {
+    "hpPerLevel": 5,
+    "statEveryLevels": 3
+  },
+  "levels": [
+    {
+      "level": 1,
+      "skills": [
+        {
+          "id": "clock-l1-damage",
+          "name": "Spring Bolt 1",
+          "description": "Spring Bolt 1: a level 1 damage technique.",
+          "level": 1,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+0",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l1-heal",
+          "name": "Repair Mist 1",
+          "description": "Repair Mist 1: a level 1 heal technique.",
+          "level": 1,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+0",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l1-shield",
+          "name": "Gear Ward 1",
+          "description": "Gear Ward 1: a level 1 shield technique.",
+          "level": 1,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+0",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l1-move",
+          "name": "Clockstep 1",
+          "description": "Clockstep 1: a level 1 move technique.",
+          "level": 1,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l1-condition",
+          "name": "Snare Cog 1",
+          "description": "Snare Cog 1: a level 1 condition technique.",
+          "level": 1,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "skills": [
+        {
+          "id": "clock-l2-damage",
+          "name": "Spring Bolt 2",
+          "description": "Spring Bolt 2: a level 2 damage technique.",
+          "level": 2,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+1",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l2-heal",
+          "name": "Repair Mist 2",
+          "description": "Repair Mist 2: a level 2 heal technique.",
+          "level": 2,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+1",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l2-shield",
+          "name": "Gear Ward 2",
+          "description": "Gear Ward 2: a level 2 shield technique.",
+          "level": 2,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+1",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l2-move",
+          "name": "Clockstep 2",
+          "description": "Clockstep 2: a level 2 move technique.",
+          "level": 2,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l2-condition",
+          "name": "Snare Cog 2",
+          "description": "Snare Cog 2: a level 2 condition technique.",
+          "level": 2,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "skills": [
+        {
+          "id": "clock-l3-damage",
+          "name": "Spring Bolt 3",
+          "description": "Spring Bolt 3: a level 3 damage technique.",
+          "level": 3,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+2",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l3-heal",
+          "name": "Repair Mist 3",
+          "description": "Repair Mist 3: a level 3 heal technique.",
+          "level": 3,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+2",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l3-shield",
+          "name": "Gear Ward 3",
+          "description": "Gear Ward 3: a level 3 shield technique.",
+          "level": 3,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+2",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l3-move",
+          "name": "Clockstep 3",
+          "description": "Clockstep 3: a level 3 move technique.",
+          "level": 3,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 3
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l3-condition",
+          "name": "Snare Cog 3",
+          "description": "Snare Cog 3: a level 3 condition technique.",
+          "level": 3,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "skills": [
+        {
+          "id": "clock-l4-damage",
+          "name": "Spring Bolt 4",
+          "description": "Spring Bolt 4: a level 4 damage technique.",
+          "level": 4,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+3",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l4-heal",
+          "name": "Repair Mist 4",
+          "description": "Repair Mist 4: a level 4 heal technique.",
+          "level": 4,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+3",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l4-shield",
+          "name": "Gear Ward 4",
+          "description": "Gear Ward 4: a level 4 shield technique.",
+          "level": 4,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+3",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l4-move",
+          "name": "Clockstep 4",
+          "description": "Clockstep 4: a level 4 move technique.",
+          "level": 4,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 3
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l4-condition",
+          "name": "Snare Cog 4",
+          "description": "Snare Cog 4: a level 4 condition technique.",
+          "level": 4,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "skills": [
+        {
+          "id": "clock-l5-damage",
+          "name": "Spring Bolt 5",
+          "description": "Spring Bolt 5: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l5-heal",
+          "name": "Repair Mist 5",
+          "description": "Repair Mist 5: a level 5 heal technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l5-shield",
+          "name": "Gear Ward 5",
+          "description": "Gear Ward 5: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l5-move",
+          "name": "Clockstep 5",
+          "description": "Clockstep 5: a level 5 move technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 3
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l5-condition",
+          "name": "Snare Cog 5",
+          "description": "Snare Cog 5: a level 5 condition technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "skills": [
+        {
+          "id": "clock-l6-damage",
+          "name": "Spring Bolt 6",
+          "description": "Spring Bolt 6: a level 6 damage technique.",
+          "level": 6,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+5",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l6-heal",
+          "name": "Repair Mist 6",
+          "description": "Repair Mist 6: a level 6 heal technique.",
+          "level": 6,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+5",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l6-shield",
+          "name": "Gear Ward 6",
+          "description": "Gear Ward 6: a level 6 shield technique.",
+          "level": 6,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+5",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l6-move",
+          "name": "Clockstep 6",
+          "description": "Clockstep 6: a level 6 move technique.",
+          "level": 6,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 4
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l6-condition",
+          "name": "Snare Cog 6",
+          "description": "Snare Cog 6: a level 6 condition technique.",
+          "level": 6,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 7,
+      "skills": [
+        {
+          "id": "clock-l7-damage",
+          "name": "Spring Bolt 7",
+          "description": "Spring Bolt 7: a level 7 damage technique.",
+          "level": 7,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+6",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l7-heal",
+          "name": "Repair Mist 7",
+          "description": "Repair Mist 7: a level 7 heal technique.",
+          "level": 7,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+6",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l7-shield",
+          "name": "Gear Ward 7",
+          "description": "Gear Ward 7: a level 7 shield technique.",
+          "level": 7,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+6",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l7-move",
+          "name": "Clockstep 7",
+          "description": "Clockstep 7: a level 7 move technique.",
+          "level": 7,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 4
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l7-condition",
+          "name": "Snare Cog 7",
+          "description": "Snare Cog 7: a level 7 condition technique.",
+          "level": 7,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 8,
+      "skills": [
+        {
+          "id": "clock-l8-damage",
+          "name": "Spring Bolt 8",
+          "description": "Spring Bolt 8: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l8-heal",
+          "name": "Repair Mist 8",
+          "description": "Repair Mist 8: a level 8 heal technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l8-shield",
+          "name": "Gear Ward 8",
+          "description": "Gear Ward 8: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l8-move",
+          "name": "Clockstep 8",
+          "description": "Clockstep 8: a level 8 move technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 4
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l8-condition",
+          "name": "Snare Cog 8",
+          "description": "Snare Cog 8: a level 8 condition technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 9,
+      "skills": [
+        {
+          "id": "clock-l9-damage",
+          "name": "Spring Bolt 9",
+          "description": "Spring Bolt 9: a level 9 damage technique.",
+          "level": 9,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+8",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l9-heal",
+          "name": "Repair Mist 9",
+          "description": "Repair Mist 9: a level 9 heal technique.",
+          "level": 9,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+8",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l9-shield",
+          "name": "Gear Ward 9",
+          "description": "Gear Ward 9: a level 9 shield technique.",
+          "level": 9,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+8",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l9-move",
+          "name": "Clockstep 9",
+          "description": "Clockstep 9: a level 9 move technique.",
+          "level": 9,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 5
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l9-condition",
+          "name": "Snare Cog 9",
+          "description": "Snare Cog 9: a level 9 condition technique.",
+          "level": 9,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "level": 10,
+      "skills": [
+        {
+          "id": "clock-l10-damage",
+          "name": "Spring Bolt 10",
+          "description": "Spring Bolt 10: a level 10 damage technique.",
+          "level": 10,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+9",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l10-heal",
+          "name": "Repair Mist 10",
+          "description": "Repair Mist 10: a level 10 heal technique.",
+          "level": 10,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "heal",
+              "dice": "1d6+9",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l10-shield",
+          "name": "Gear Ward 10",
+          "description": "Gear Ward 10: a level 10 shield technique.",
+          "level": 10,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+9",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l10-move",
+          "name": "Clockstep 10",
+          "description": "Clockstep 10: a level 10 move technique.",
+          "level": 10,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "move",
+              "movementTiles": 5
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-l10-condition",
+          "name": "Snare Cog 10",
+          "description": "Snare Cog 10: a level 10 condition technique.",
+          "level": 10,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "condition",
+              "condition": "slow",
+              "durationTurns": 2
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    }
+  ],
+  "advancements": [
+    {
+      "id": "clock-bastion",
+      "parentId": null,
+      "level": 3,
+      "name": "Iron Bastion",
+      "description": "Iron Bastion specializes in CON.",
+      "specialistStat": "con",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-bastion-signature",
+          "name": "Iron Bastion Signature",
+          "description": "Iron Bastion Signature: a level 3 damage technique.",
+          "level": 3,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+2",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-bastion-ward",
+          "name": "Iron Bastion Ward",
+          "description": "Iron Bastion Ward: a level 3 shield technique.",
+          "level": 3,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+2",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-bastion-bulwark",
+      "parentId": "clock-bastion",
+      "level": 5,
+      "name": "Bulwark",
+      "description": "Bulwark specializes in CON.",
+      "specialistStat": "con",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-bastion-bulwark-signature",
+          "name": "Bulwark Signature",
+          "description": "Bulwark Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-bastion-bulwark-ward",
+          "name": "Bulwark Ward",
+          "description": "Bulwark Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-bastion-bulwark-ascendant",
+      "parentId": "clock-bastion-bulwark",
+      "level": 8,
+      "name": "Ascendant Bulwark",
+      "description": "Ascendant Bulwark specializes in CON.",
+      "specialistStat": "con",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-bastion-bulwark-ascendant-signature",
+          "name": "Ascendant Bulwark Signature",
+          "description": "Ascendant Bulwark Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-bastion-bulwark-ascendant-ward",
+          "name": "Ascendant Bulwark Ward",
+          "description": "Ascendant Bulwark Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-bastion-sentinel",
+      "parentId": "clock-bastion",
+      "level": 5,
+      "name": "Sentinel",
+      "description": "Sentinel specializes in CON.",
+      "specialistStat": "con",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-bastion-sentinel-signature",
+          "name": "Sentinel Signature",
+          "description": "Sentinel Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-bastion-sentinel-ward",
+          "name": "Sentinel Ward",
+          "description": "Sentinel Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-bastion-sentinel-ascendant",
+      "parentId": "clock-bastion-sentinel",
+      "level": 8,
+      "name": "Ascendant Sentinel",
+      "description": "Ascendant Sentinel specializes in CON.",
+      "specialistStat": "con",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-bastion-sentinel-ascendant-signature",
+          "name": "Ascendant Sentinel Signature",
+          "description": "Ascendant Sentinel Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-bastion-sentinel-ascendant-ward",
+          "name": "Ascendant Sentinel Ward",
+          "description": "Ascendant Sentinel Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-bastion-vanguard",
+      "parentId": "clock-bastion",
+      "level": 5,
+      "name": "Vanguard",
+      "description": "Vanguard specializes in CON.",
+      "specialistStat": "con",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-bastion-vanguard-signature",
+          "name": "Vanguard Signature",
+          "description": "Vanguard Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-bastion-vanguard-ward",
+          "name": "Vanguard Ward",
+          "description": "Vanguard Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-bastion-vanguard-ascendant",
+      "parentId": "clock-bastion-vanguard",
+      "level": 8,
+      "name": "Ascendant Vanguard",
+      "description": "Ascendant Vanguard specializes in CON.",
+      "specialistStat": "con",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-bastion-vanguard-ascendant-signature",
+          "name": "Ascendant Vanguard Signature",
+          "description": "Ascendant Vanguard Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-bastion-vanguard-ascendant-ward",
+          "name": "Ascendant Vanguard Ward",
+          "description": "Ascendant Vanguard Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "con",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-ranger",
+      "parentId": null,
+      "level": 3,
+      "name": "Gear Ranger",
+      "description": "Gear Ranger specializes in DEX.",
+      "specialistStat": "dex",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-ranger-signature",
+          "name": "Gear Ranger Signature",
+          "description": "Gear Ranger Signature: a level 3 damage technique.",
+          "level": 3,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+2",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-ranger-ward",
+          "name": "Gear Ranger Ward",
+          "description": "Gear Ranger Ward: a level 3 shield technique.",
+          "level": 3,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+2",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-ranger-sharpspring",
+      "parentId": "clock-ranger",
+      "level": 5,
+      "name": "Sharpspring",
+      "description": "Sharpspring specializes in DEX.",
+      "specialistStat": "dex",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-ranger-sharpspring-signature",
+          "name": "Sharpspring Signature",
+          "description": "Sharpspring Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-ranger-sharpspring-ward",
+          "name": "Sharpspring Ward",
+          "description": "Sharpspring Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-ranger-sharpspring-ascendant",
+      "parentId": "clock-ranger-sharpspring",
+      "level": 8,
+      "name": "Ascendant Sharpspring",
+      "description": "Ascendant Sharpspring specializes in DEX.",
+      "specialistStat": "dex",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-ranger-sharpspring-ascendant-signature",
+          "name": "Ascendant Sharpspring Signature",
+          "description": "Ascendant Sharpspring Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-ranger-sharpspring-ascendant-ward",
+          "name": "Ascendant Sharpspring Ward",
+          "description": "Ascendant Sharpspring Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-ranger-trailgear",
+      "parentId": "clock-ranger",
+      "level": 5,
+      "name": "Trailgear",
+      "description": "Trailgear specializes in DEX.",
+      "specialistStat": "dex",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-ranger-trailgear-signature",
+          "name": "Trailgear Signature",
+          "description": "Trailgear Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-ranger-trailgear-ward",
+          "name": "Trailgear Ward",
+          "description": "Trailgear Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-ranger-trailgear-ascendant",
+      "parentId": "clock-ranger-trailgear",
+      "level": 8,
+      "name": "Ascendant Trailgear",
+      "description": "Ascendant Trailgear specializes in DEX.",
+      "specialistStat": "dex",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-ranger-trailgear-ascendant-signature",
+          "name": "Ascendant Trailgear Signature",
+          "description": "Ascendant Trailgear Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-ranger-trailgear-ascendant-ward",
+          "name": "Ascendant Trailgear Ward",
+          "description": "Ascendant Trailgear Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-ranger-saboteur",
+      "parentId": "clock-ranger",
+      "level": 5,
+      "name": "Saboteur",
+      "description": "Saboteur specializes in DEX.",
+      "specialistStat": "dex",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-ranger-saboteur-signature",
+          "name": "Saboteur Signature",
+          "description": "Saboteur Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-ranger-saboteur-ward",
+          "name": "Saboteur Ward",
+          "description": "Saboteur Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-ranger-saboteur-ascendant",
+      "parentId": "clock-ranger-saboteur",
+      "level": 8,
+      "name": "Ascendant Saboteur",
+      "description": "Ascendant Saboteur specializes in DEX.",
+      "specialistStat": "dex",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-ranger-saboteur-ascendant-signature",
+          "name": "Ascendant Saboteur Signature",
+          "description": "Ascendant Saboteur Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-ranger-saboteur-ascendant-ward",
+          "name": "Ascendant Saboteur Ward",
+          "description": "Ascendant Saboteur Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "dex",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-sage",
+      "parentId": null,
+      "level": 3,
+      "name": "Signal Sage",
+      "description": "Signal Sage specializes in INT.",
+      "specialistStat": "int",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-sage-signature",
+          "name": "Signal Sage Signature",
+          "description": "Signal Sage Signature: a level 3 damage technique.",
+          "level": 3,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+2",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-sage-ward",
+          "name": "Signal Sage Ward",
+          "description": "Signal Sage Ward: a level 3 shield technique.",
+          "level": 3,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+2",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-sage-resonator",
+      "parentId": "clock-sage",
+      "level": 5,
+      "name": "Resonator",
+      "description": "Resonator specializes in INT.",
+      "specialistStat": "int",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-sage-resonator-signature",
+          "name": "Resonator Signature",
+          "description": "Resonator Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-sage-resonator-ward",
+          "name": "Resonator Ward",
+          "description": "Resonator Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-sage-resonator-ascendant",
+      "parentId": "clock-sage-resonator",
+      "level": 8,
+      "name": "Ascendant Resonator",
+      "description": "Ascendant Resonator specializes in INT.",
+      "specialistStat": "int",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-sage-resonator-ascendant-signature",
+          "name": "Ascendant Resonator Signature",
+          "description": "Ascendant Resonator Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-sage-resonator-ascendant-ward",
+          "name": "Ascendant Resonator Ward",
+          "description": "Ascendant Resonator Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-sage-chronist",
+      "parentId": "clock-sage",
+      "level": 5,
+      "name": "Chronist",
+      "description": "Chronist specializes in INT.",
+      "specialistStat": "int",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-sage-chronist-signature",
+          "name": "Chronist Signature",
+          "description": "Chronist Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-sage-chronist-ward",
+          "name": "Chronist Ward",
+          "description": "Chronist Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-sage-chronist-ascendant",
+      "parentId": "clock-sage-chronist",
+      "level": 8,
+      "name": "Ascendant Chronist",
+      "description": "Ascendant Chronist specializes in INT.",
+      "specialistStat": "int",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-sage-chronist-ascendant-signature",
+          "name": "Ascendant Chronist Signature",
+          "description": "Ascendant Chronist Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-sage-chronist-ascendant-ward",
+          "name": "Ascendant Chronist Ward",
+          "description": "Ascendant Chronist Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-sage-runewright",
+      "parentId": "clock-sage",
+      "level": 5,
+      "name": "Runewright",
+      "description": "Runewright specializes in INT.",
+      "specialistStat": "int",
+      "statBonusPercent": 10,
+      "skills": [
+        {
+          "id": "clock-sage-runewright-signature",
+          "name": "Runewright Signature",
+          "description": "Runewright Signature: a level 5 damage technique.",
+          "level": 5,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-sage-runewright-ward",
+          "name": "Runewright Ward",
+          "description": "Runewright Ward: a level 5 shield technique.",
+          "level": 5,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+4",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-sage-runewright-ascendant",
+      "parentId": "clock-sage-runewright",
+      "level": 8,
+      "name": "Ascendant Runewright",
+      "description": "Ascendant Runewright specializes in INT.",
+      "specialistStat": "int",
+      "statBonusPercent": 15,
+      "skills": [
+        {
+          "id": "clock-sage-runewright-ascendant-signature",
+          "name": "Ascendant Runewright Signature",
+          "description": "Ascendant Runewright Signature: a level 8 damage technique.",
+          "level": 8,
+          "resolution": "attack",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "single",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "enemy",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "damage",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        },
+        {
+          "id": "clock-sage-runewright-ascendant-ward",
+          "name": "Ascendant Runewright Ward",
+          "description": "Ascendant Runewright Ward: a level 8 shield technique.",
+          "level": 8,
+          "resolution": "automatic",
+          "saveStat": "dex",
+          "halfOnSave": true,
+          "targeting": {
+            "shape": "self",
+            "rangeTiles": 6,
+            "radiusTiles": 2,
+            "lengthTiles": 5,
+            "widthTiles": 1,
+            "angleDegrees": 60,
+            "metric": "euclidean",
+            "team": "self",
+            "friendlyFire": false,
+            "requiresLOS": true
+          },
+          "effects": [
+            {
+              "op": "shield",
+              "dice": "1d6+7",
+              "stat": "int",
+              "coefficient": 1
+            }
+          ],
+          "maxTargets": 1,
+          "usesPerEncounter": 6,
+          "cooldownTurns": 1,
+          "resourceCost": 2,
+          "visual": {
+            "color": "#d6ad63",
+            "style": "pulse",
+            "durationMs": 450
+          }
+        }
+      ]
+    }
+  ]
+}

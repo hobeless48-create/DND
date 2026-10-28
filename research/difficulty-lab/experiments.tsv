@@ -1,0 +1,3 @@
+timestamp_utc	commit	score	outcome	hypothesis
+2026-10-26T23:06:57+07:00	b1fbb81b2ca1a0028e7a4b706500cb6bc58a3830	-10.090952932098762	baseline	Requested raw AC scaling
+2026-10-26T23:07:14+07:00	c0d106f48f120021a877a921a6bd2311e07f708c	-9.823881172839505	kept in lab only	Scale only defense above AC 10; keep every other parameter fixed

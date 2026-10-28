@@ -1,0 +1,23 @@
+{
+  "description": "DND expansion material architecture judgments",
+  "questions": {
+    "generated_mechanics": {
+      "type": "choice",
+      "instructions": "Which content architecture best supports arbitrary player class concepts, generated skill sheets, editable content, reproducible turns, and bounded token cost?",
+      "criteria": {
+        "declarative": "DeepSeek authors versioned JSON class and skill records; local validation and a generic effect interpreter execute accepted data.",
+        "generated_code": "DeepSeek generates and executes JavaScript for each new class and skill during play.",
+        "narrative_only": "Keep four fixed classes and use DeepSeek only for cosmetic text."
+      }
+    },
+    "recommended_features": {
+      "type": "choice",
+      "instructions": "Which addition should be prioritized to keep larger hard encounters tactically readable and predictable?",
+      "criteria": {
+        "telegraph_waves": "Visible enemy intent, explicit turn budgets, and telegraphed reinforcements that still meet the selected difficulty's total enemy minimum.",
+        "unbounded_spawns": "Spawn all requested and generated enemies without board occupancy limits or a turn-length cap.",
+        "hidden_scaling": "Modify monster stats during the fight according to player performance without showing the rules."
+      }
+    }
+  }
+}

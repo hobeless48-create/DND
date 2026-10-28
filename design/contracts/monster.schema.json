@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "role": {
+      "enum": [
+        "regular",
+        "boss"
+      ]
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 11
+    },
+    "hp": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2000
+    },
+    "ac": {
+      "type": "integer",
+      "minimum": 6,
+      "maximum": 30
+    },
+    "speed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "stats": {
+      "type": "object",
+      "properties": {
+        "str": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "dex": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "con": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "int": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "wis": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "cha": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        }
+      },
+      "required": [
+        "str",
+        "dex",
+        "con",
+        "int",
+        "wis",
+        "cha"
+      ],
+      "additionalProperties": false
+    },
+    "attackDice": {
+      "type": "string",
+      "pattern": "^[1-6]d(4|6|8|10|12|20)([+-]([0-9]|[1-4][0-9]))?$"
+    },
+    "turnProfile": {
+      "enum": [
+        "move-and-act",
+        "move-or-act",
+        "stationary"
+      ]
+    },
+    "skillIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{1,63}$"
+      },
+      "minItems": 0,
+      "maxItems": 12
+    },
+    "behavior": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99
+          },
+          "trigger": {
+            "enum": [
+              "targetHpAbove80",
+              "selfHpBelow70FirstTime",
+              "allyWounded",
+              "enemyInRange",
+              "otherwise"
+            ]
+          },
+          "action": {
+            "enum": [
+              "useSkill",
+              "attack",
+              "approach",
+              "retreat",
+              "guard"
+            ]
+          },
+          "skillId": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "oncePerEncounter": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "priority",
+          "trigger",
+          "action",
+          "skillId",
+          "oncePerEncounter"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 12
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "role",
+    "level",
+    "hp",
+    "ac",
+    "speed",
+    "stats",
+    "attackDice",
+    "turnProfile",
+    "skillIds",
+    "behavior"
+  ],
+  "additionalProperties": false
+}

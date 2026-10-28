@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D AI-Assisted VTT</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #185FA5; --secondary: #A32D2D;
+            --board-light: #F1EFE8; --board-dark: #D3D1C7;
+            --hl-move: rgba(239, 159, 39, 0.6); --hl-atk: rgba(226, 75, 74, 0.6); --hl-skill: rgba(92, 107, 192, 0.6);
+            --bg: #fff; --txt: #1a1a1a; --txt2: #666; --brd: #ddd; --card: #f8f8f7;
+        }
+
+        body {
+            font-family: system-ui, sans-serif; background: #f5f4f0; color: var(--txt);
+            font-size: 14px; min-height: 100vh; display: grid;
+            grid-template-areas: "header header" "board panel";
+            grid-template-columns: 1fr 350px; grid-template-rows: auto 1fr; gap: 12px; padding: 12px;
+        }
+
+        header { grid-area: header; background: #fff; border: 1px solid var(--brd); border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;}
+        h1 { font-size: 18px; font-weight: 700; margin-right: 12px;}
+
+        button { cursor: pointer; border: 1px solid var(--brd); border-radius: 6px; padding: 6px 10px; background: var(--card); color: var(--txt); font-size: 11px; font-weight: 600; transition: all 0.15s;}
+        button:hover { background: #e8e7e3; }
+        button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+        button.danger { background: var(--secondary); color: #fff; border-color: var(--secondary); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        input, select, textarea { border: 1px solid var(--brd); border-radius: 6px; padding: 6px 8px; background: #fff; font-size: 12px; font-family: inherit; width: 100%; color: var(--txt);}
+        .input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+        .input-group label { font-size: 10px; font-weight: 600; color: var(--txt2); text-transform: uppercase;}
+        .flex-row { display: flex; gap: 8px; align-items: center;}
+
+        .board-container { grid-area: board; background: #fff; border: 1px solid var(--brd); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+        .board-tools { display: flex; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--brd); flex-wrap: wrap; align-items: center; background: #fafafa;}
+        button.tool.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        #terrain-palette { display: flex; gap: 8px; padding: 8px 12px; background: #eef2f5; border-bottom: 1px solid var(--brd); flex-wrap: wrap; align-items: center;}
+        .terrain-swatch { width: 24px; height: 24px; border-radius: 4px; border: 2px solid rgba(0,0,0,0.2); cursor: pointer; background-size: cover; background-position: center; }
+        .terrain-swatch.active { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+
+        #board { flex: 1; background: var(--board-light); position: relative; overflow: auto; cursor: grab; padding: 12px;}
+        #board:active { cursor: grabbing; }
+
+        .board-row { display: flex; align-items: center; }
+        .cell { width: 40px; height: 40px; border: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; flex-shrink: 0; background-size: cover; background-position: center; }
+        .cell.light { background-color: var(--board-light); }
+        .cell.dark { background-color: var(--board-dark); }
+        .cell.hl-move::after { content: ''; position: absolute; inset: 0; background: var(--hl-move); pointer-events: none; z-index: 1; }
+        .cell.hl-atk::after { content: ''; position: absolute; inset: 0; background: var(--hl-atk); pointer-events: none; z-index: 1; }
+        .cell.hl-skill::after { content: ''; position: absolute; inset: 0; background: var(--hl-skill); pointer-events: none; z-index: 1; }
+
+        .token { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; border: 2px solid rgba(0, 0, 0, 0.4); color: #fff; cursor: pointer; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); position: relative; z-index: 10; background-size: cover; background-position: center; background-color: #555; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.1s; }
+        .token.selected { box-shadow: 0 0 0 4px rgba(24, 95, 165, 0.6); }
+        .token .hp-bar-mini { position: absolute; bottom: -4px; left: 10%; width: 80%; height: 4px; background: red; border-radius: 2px; border: 1px solid #000; }
+        .token .hp-fill-mini { height: 100%; background: #3B6D11; border-radius: 1px; }
+
+        .panel { grid-area: panel; background: #fff; border: 1px solid var(--brd); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: calc(100vh - 120px); }
+        .panel-section { display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--brd); padding-bottom: 12px; position: relative;}
+        .panel-section:last-child { border-bottom: none; }
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--txt); text-transform: uppercase; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; font-size: 10px;}
+        .stat-box { background: #f0f0ee; padding: 4px; border-radius: 4px; border: 1px solid var(--brd); }
+        .stat-box strong { display: block; font-size: 12px; color: var(--primary); }
+
+        .hp-bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin: 4px 0; border: 1px solid #ccc; }
+        .hp-fill { height: 100%; background: #3B6D11; transition: width 0.2s; }
+
+        .action-btn { padding: 8px 4px; text-align: center; border-radius: 6px; font-weight: 700; font-size: 10px; }
+        .action-btn.move { background: #FFF3E0; border-color: #EF9F27; color: #E65100; }
+        .action-btn.attack { background: #FFEBEE; border-color: #E24B4A; color: #C62828; }
+        .action-btn.skill { background: #E8EAF6; border-color: #5C6BC0; color: #283593; }
+        .action-btn.active-mode { box-shadow: 0 0 0 2px #000 inset; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; margin-bottom: 8px; border-bottom: 1px solid var(--brd); padding-bottom: 4px;}
+        .tab-btn { background: transparent; border: none; font-size: 11px; padding: 4px 8px; color: var(--txt2); cursor: pointer; font-weight: bold;}
+        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); border-radius: 0;}
+
+        /* Inventory Grid */
+        .inv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .inv-slot { background: #fafafa; border: 1px dashed #ccc; padding: 6px; border-radius: 6px; font-size: 10px; cursor: pointer; text-align: center;}
+        .inv-slot:hover { border-color: var(--primary); background: #E6F1FB;}
+        .inv-slot strong { display: block; color: var(--txt2); font-size: 9px; text-transform: uppercase; margin-bottom: 2px;}
+        .inv-slot.filled { border-style: solid; background: #fff; border-color: var(--primary); }
+        .inv-slot.filled span { color: var(--txt); font-weight: bold; font-size: 11px;}
+
+        /* Modals */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000;}
+        .modal { background: #fff; border-radius: 12px; width: min(800px, 95%); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);}
+        .modal-header { padding-bottom: 12px; border-bottom: 1px solid var(--brd); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;}
+        .modal-body { overflow-y: auto; }
+        
+        .item-card { border: 1px solid var(--brd); padding: 10px; border-radius: 8px; background: #fff; margin-bottom: 8px;}
+        .item-card h4 { font-size: 13px; color: var(--primary); margin: 0;}
+        .item-meta { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 4px;}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="flex-row">
+            <h1>D&D AI-Assisted VTT</h1>
+            <button class="primary" id="btn-undo">↩️ Undo</button>
+            <button class="danger" id="btn-clear">Clear Board</button>
+        </div>
+        
+        <div class="flex-row">
+            <span style="font-size:10px; font-weight:bold; color:var(--txt2);">BOARD:</span>
+            <select id="saveSlot" style="width: 80px;">
+                <option value="1">Slot 1</option><option value="2">Slot 2</option>
+                <option value="3">Slot 3</option><option value="4">Slot 4</option>
+                <option value="5">Slot 5</option><option value="6">Slot 6</option>
+                <option value="7">Slot 7</option><option value="8">Slot 8</option>
+                <option value="9">Slot 9</option><option value="10">Slot 10</option>
+            </select>
+            <button class="primary" onclick="saveBoard()">💾 Save</button>
+            <button class="primary" onclick="loadBoard()">📂 Load</button>
+            <span style="color:#ddd;">|</span>
+            <button class="primary" onclick="resizeBoardPrompt()">📐 Resize</button>
+            <button class="primary" onclick="exportAI()" style="background:#5C6BC0; border-color:#5C6BC0;">🤖 Export AI</button>
+            <span style="color:#ddd;">|</span>
+            <button class="primary" onclick="openLibrary('skill')">📖 Spells</button>
+            <button class="primary" onclick="openLibrary('item')">🎒 Items</button>
+        </div>
+    </header>
+
+    <div class="board-container">
+        <div class="board-tools">
+            <span style="font-size: 11px; font-weight: bold; color: var(--txt2);">BRUSH:</span>
+            <button class="tool active" data-tool="empty">Empty</button>
+            <button class="tool" data-tool="wall">Wall</button>
+            <button class="tool" data-tool="hazard">Hazard</button>
+            <button class="tool" data-tool="custom">Custom Tile</button>
+            <button class="tool" id="btn-terrain" data-tool="terrain">🌳 Terrain</button>
+            <input type="text" id="customTileImg" placeholder="Paste Custom Image URL..." style="width: 200px; display: none;">
+        </div>
+        
+        <div id="terrain-palette" style="display: none;"></div>
+        <div id="board"></div>
+        
+        <div id="game-log" style="height: 100px; overflow-y: auto; background: #222; color: #0f0; font-family: monospace; font-size: 11px; padding: 8px; border-top: 1px solid var(--brd);">
+            > System initialized...
+        </div>
+    </div>
+
+    <div class="panel">
+        <div id="selectedPanel" class="panel-section" style="display: none;"></div>
+        <div class="panel-section empty-state" id="emptyPanel" style="text-align: center; padding: 20px 0; color: #888;">
+            Click a unit on the board to manage
+        </div>
+
+        <div class="panel-section">
+            <div class="panel-title">Deploy Character</div>
+            <div class="input-group">
+                <label>Name & Image</label>
+                <div class="flex-row">
+                    <input type="text" id="c_name" placeholder="Character Name" value="Hero">
+                    <input type="color" id="c_color" value="#185FA5" style="width: 40px; padding: 0;">
+                </div>
+                <input type="text" id="c_image" placeholder="Image URL (Optional)">
+            </div>
+            
+            <div class="flex-row">
+                <div class="input-group"><label>Max HP</label><input type="number" id="c_hp" value="30"></div>
+                <div class="input-group"><label>AC</label><input type="number" id="c_ac" value="15"></div>
+            </div>
+            <div class="flex-row">
+                <div class="input-group"><label>Speed (ft)</label><input type="number" id="c_speed" value="30" step="5"></div>
+                <div class="input-group"><label>Attack Range</label><input type="number" id="c_range" value="5" step="5"></div>
+            </div>
+            <div class="input-group">
+                <label>Core Stats</label>
+                <div class="stat-grid">
+                    <input type="number" id="c_str" title="STR" value="16">
+                    <input type="number" id="c_dex" title="DEX" value="14">
+                    <input type="number" id="c_con" title="CON" value="14">
+                    <input type="number" id="c_int" title="INT" value="10">
+                    <input type="number" id="c_agi" title="AGI" value="12">
+                </div>
+            </div>
+            <button class="primary" style="margin-top: 4px;" id="btn-add-unit">Deploy to Board</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="libraryOverlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="lib-title">Library</h2>
+                <button onclick="document.getElementById('libraryOverlay').style.display='none'">Close</button>
+            </div>
+            <div class="tabs" id="lib-tabs"></div>
+            <div class="modal-body" id="libraryBody" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px;"></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="createItemOverlay" style="display: none; z-index: 2001;">
+        <div class="modal" style="width: 400px;">
+            <div class="modal-header"><h2>Create Custom Item</h2><button onclick="document.getElementById('createItemOverlay').style.display='none'">Cancel</button></div>
+            <div class="modal-body">
+                <div class="input-group"><label>Item Name</label><input type="text" id="ci_name"></div>
+                <div class="input-group"><label>Slot Type</label>
+                    <select id="ci_type">
+                        <option value="weapon">Weapon (Main/Offhand)</option>
+                        <option value="head">Armor: Head</option>
+                        <option value="chest">Armor: Chest</option>
+                        <option value="leggings">Armor: Leggings</option>
+                        <option value="boots">Armor: Boots</option>
+                        <option value="accessory">Accessory</option>
+                        <option value="potion">Consumable / Potion</option>
+                    </select>
+                </div>
+                <div class="input-group"><label>Damage / Effect Description</label><input type="text" id="ci_effect" placeholder="e.g., 1d8 Slashing, or Heals 2d4"></div>
+                <div class="input-group"><label>Stats Bonus (Optional)</label><input type="text" id="ci_stats" placeholder="e.g., +1 AC, +2 STR"></div>
+                <button class="primary" onclick="saveCustomItem()" style="width: 100%; margin-top: 10px;">Save to Library</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="equipOverlay" style="display: none; z-index: 2001;">
+        <div class="modal" style="width: 400px;">
+            <div class="modal-header"><h2 id="eq-title">Equip Item</h2><button onclick="document.getElementById('equipOverlay').style.display='none'">Close</button></div>
+            <div class="modal-body" id="equipBody"></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="aiExportOverlay" style="display: none; z-index: 2005;">
+        <div class="modal" style="width: 600px;">
+            <div class="modal-header"><h2>🤖 Export State for AI DM</h2><button onclick="document.getElementById('aiExportOverlay').style.display='none'">Close</button></div>
+            <div class="modal-body">
+                <p style="font-size: 12px; margin-bottom: 8px; color: var(--txt2);">Copy the text below and paste it into ChatGPT/Gemini to update the DM on the current battle state!</p>
+                <textarea id="aiExportText" rows="15" style="font-family: monospace; font-size: 11px; padding: 10px;"></textarea>
+                <button class="primary" onclick="navigator.clipboard.writeText(document.getElementById('aiExportText').value); alert('Copied to clipboard!')" style="width: 100%; margin-top: 10px;">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="customAlertOverlay" style="display: none; z-index: 3000;">
+        <div class="modal" style="width: 300px; text-align: center;">
+            <div class="modal-body" id="customAlertMsg" style="margin-bottom: 15px;"></div>
+            <button class="primary" id="btn-alert-ok" style="width: 100%;">OK</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="customPromptOverlay" style="display: none; z-index: 3000;">
+        <div class="modal" style="width: 300px; text-align: center;">
+            <div class="modal-body" id="customPromptMsg" style="margin-bottom: 10px;"></div>
+            <input type="text" id="customPromptInput" style="margin-bottom: 15px; text-align: center; font-size: 16px;">
+            <div style="display:flex; gap:8px;">
+                <button id="btn-prompt-cancel" style="width:100%;">Cancel</button>
+                <button class="danger" id="btn-prompt-submit" style="width: 100%;">Apply Action</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. DATA & STATE
+        // ==========================================
+        const SKILL_LIBRARY = {
+            'fireball': { name: 'Fireball', type: 'atk', range: 30, aoe: 15, uses: 2, desc: '15ft radius explosion.', effect: 'Rolls 8d6 Fire damage' },
+            'magic_missile': { name: 'Magic Missile', type: 'atk', range: 40, aoe: 0, uses: 3, desc: 'Unerring magical darts.', effect: 'Rolls 3d4+3 Force damage' },
+            'cure_wounds': { name: 'Cure Wounds', type: 'heal', range: 5, aoe: 0, uses: 4, desc: 'Heals a creature you touch.', effect: 'Rolls 1d8 + INT Healing' },
+            'mass_heal': { name: 'Mass Healing Word', type: 'heal', range: 30, aoe: 15, uses: 1, desc: 'Heal all allies in area.', effect: 'Rolls 1d4 + INT Healing' },
+            'dash': { name: 'Action Dash', type: 'buff', range: 0, aoe: 0, uses: 99, desc: 'Double movement speed.', effect: 'Self Buff' },
+            'cleave': { name: 'Cleave Attack', type: 'atk', range: 5, aoe: 5, uses: 99, desc: 'Swing in a wide arc.', effect: 'Weapon Damage to adjacent' }
+        };
+
+        const ITEM_LIBRARY = [
+            { id: 'i1', name: 'Iron Longsword', type: 'weapon', effect: '1d8 Slashing', stats: '' },
+            { id: 'i2', name: 'Wooden Shield', type: 'weapon', effect: 'Block', stats: '+2 AC' },
+            { id: 'i3', name: 'Leather Armor', type: 'chest', effect: 'Light Armor', stats: 'AC 11 + DEX' },
+            { id: 'i4', name: 'Ring of Protection', type: 'accessory', effect: 'Magical Ward', stats: '+1 AC' },
+            { id: 'i5', name: 'Health Potion', type: 'potion', effect: 'Heals 2d4+2', stats: '' }
+        ];
+
+        const TERRAIN_COLORS = { 'empty': '', 'wall': '#333', 'hazard': '#E24B4A' };
+        let customTerrainList = [{ type: 'color', val: '#4CAF50', name: 'Grass' }, { type: 'color', val: '#2196F3', name: 'Water' }, { type: 'color', val: '#795548', name: 'Dirt' }];
+        let activeTerrain = customTerrainList[0];
+
+        let BOARD_WIDTH = 24;
+        let BOARD_HEIGHT = 16;
+
+        let state = {
+            board: [], units: [], selectedUnit: null,
+            actionMode: null, activeSkillId: null, highlightedCells: [],
+            isEditing: false, activeTab: 'core', showSkillsDropdown: false,
+            currentTool: 'empty', isDrawing: false,
+            history: [], log: []
+        };
+
+        let libMode = 'skill'; 
+        let libTab = 'all';
+
+        // ==========================================
+        // 2. CORE GAME LOGIC & UTILS
+        // ==========================================
+        function initBoard() {
+            state.board = [];
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                state.board[y] = [];
+                for (let x = 0; x < BOARD_WIDTH; x++) { state.board[y][x] = { type: 'empty', image: null }; }
+            }
+        }
+
+        function addLog(msg) {
+            state.log.push(`> ${msg}`);
+            const logBox = document.getElementById('game-log');
+            if(logBox) { logBox.innerHTML = state.log.join('<br>'); logBox.scrollTop = logBox.scrollHeight; }
+        }
+
+        function saveHistory() {
+            const snapshot = { units: JSON.parse(JSON.stringify(state.units)), board: JSON.parse(JSON.stringify(state.board)) };
+            state.history.push(snapshot);
+            if(state.history.length > 20) state.history.shift(); 
+        }
+
+        function undoLastAction() {
+            if (state.history.length === 0) { addLog("Nothing to undo."); return false; }
+            const prev = state.history.pop();
+            state.units = prev.units; state.board = prev.board;
+            state.selectedUnit = null; state.actionMode = null; state.highlightedCells = [];
+            addLog("Action undone. Time reversed."); return true; 
+        }
+
+        function calculateDistance(x1, y1, x2, y2) { return Math.max(Math.abs(x1 - x2), Math.abs(y1 - y2)); }
+
+        // Safe clone function to destroy lingering event listeners!
+        function replaceNode(nodeId) {
+            const node = document.getElementById(nodeId);
+            const clone = node.cloneNode(true);
+            node.parentNode.replaceChild(clone, node);
+            return clone;
+        }
+
+        function showAlert(msg) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('customAlertOverlay');
+                const btn = replaceNode('btn-alert-ok');
+                document.getElementById('customAlertMsg').innerHTML = msg;
+                overlay.style.display = 'flex';
+                btn.onclick = () => { overlay.style.display = 'none'; resolve(); };
+            });
+        }
+
+        function showPrompt(msg, defaultValue = "0") {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('customPromptOverlay');
+                const input = replaceNode('customPromptInput');
+                const submitBtn = replaceNode('btn-prompt-submit');
+                const cancelBtn = replaceNode('btn-prompt-cancel');
+                
+                document.getElementById('customPromptMsg').innerHTML = msg;
+                input.value = defaultValue;
+                overlay.style.display = 'flex';
+                input.focus(); input.select();
+                
+                const cleanupAndResolve = (val) => { overlay.style.display = 'none'; resolve(val); };
+                submitBtn.onclick = () => cleanupAndResolve(input.value);
+                cancelBtn.onclick = () => cleanupAndResolve(null);
+                input.onkeyup = (e) => { if(e.key === 'Enter') { e.preventDefault(); cleanupAndResolve(input.value); } if(e.key === 'Escape') { e.preventDefault(); cleanupAndResolve(null); } };
+            });
+        }
+
+        // ==========================================
+        // 3. EXPORT, SAVE, LOAD, RESIZE
+        // ==========================================
+        async function resizeBoardPrompt() {
+            const res = await showPrompt("Enter new size (Width,Height) e.g. 30,20:", `${BOARD_WIDTH},${BOARD_HEIGHT}`);
+            if(!res) return;
+            const parts = res.trim().split(/[,xX×]/);
+            if(parts.length === 2) {
+                const w = parseInt(parts[0]); const h = parseInt(parts[1]);
+                if(w > 0 && h > 0 && w <= 60 && h <= 40) {
+                    BOARD_WIDTH = w; BOARD_HEIGHT = h;
+                    saveHistory(); initBoard(); state.units = []; resetModes(); updatePanel(); addLog(`Board resized to ${w}x${h}`);
+                } else { addLog(`⚠️ Invalid size. Width 1-60, Height 1-40.`); }
+            } else { addLog(`⚠️ Invalid format. Use "Width,Height" e.g. 30,20`); }
+        }
+
+        function saveBoard() {
+            const slot = document.getElementById('saveSlot').value;
+            const data = { w: BOARD_WIDTH, h: BOARD_HEIGHT, b: state.board };
+            localStorage.setItem('dnd_board_slot_' + slot, JSON.stringify(data));
+            addLog(`💾 Board layout saved to Slot ${slot}.`);
+        }
+
+        function loadBoard() {
+            const slot = document.getElementById('saveSlot').value;
+            const raw = localStorage.getItem('dnd_board_slot_' + slot);
+            if(raw) {
+                saveHistory();
+                const data = JSON.parse(raw);
+                BOARD_WIDTH = data.w; BOARD_HEIGHT = data.h; state.board = data.b;
+                renderBoard(); addLog(`📂 Loaded board layout from Slot ${slot}.`);
+            } else { addLog(`Slot ${slot} is empty!`); }
+        }
+
+        function exportAI() {
+            let out = `## D&D Tactical Board State\n\n### Scene\nBoard Size: ${BOARD_WIDTH}x${BOARD_HEIGHT}\n\n### Units\n`;
+            state.units.forEach(u => {
+                out += `- **${u.name}** | HP: ${u.hp}/${u.maxHp} | AC: ${u.ac} | Spd: ${u.speed}ft | Pos: (X:${u.x}, Y:${u.y})\n`;
+                out += `  - Stats: STR ${u.stats.str}, DEX ${u.stats.dex}, CON ${u.stats.con}, INT ${u.stats.int}, AGI ${u.stats.agi}\n`;
+                if (u.skills.length > 0) out += `  - Skills: ${u.skills.map(s => SKILL_LIBRARY[s.id]?.name).join(', ')}\n`;
+                let equip = [];
+                for(let slot in u.inventory) { if(u.inventory[slot]) equip.push(`${slot}: ${u.inventory[slot].name}`); }
+                if (equip.length > 0) out += `  - Equip: ${equip.join(', ')}\n`;
+                out += `\n`;
+            });
+            document.getElementById('aiExportText').value = out;
+            document.getElementById('aiExportOverlay').style.display = 'flex';
+        }
+
+        // ==========================================
+        // 4. RENDERING (BOARD & PANEL)
+        // ==========================================
+        function renderTerrainPalette() {
+            const palette = document.getElementById('terrain-palette'); if (!palette) return;
+            palette.innerHTML = '';
+            customTerrainList.forEach((t) => {
+                const btn = document.createElement('div'); btn.className = `terrain-swatch ${activeTerrain === t ? 'active' : ''}`; btn.title = t.name;
+                if(t.type === 'color') btn.style.backgroundColor = t.val; if(t.type === 'image') btn.style.backgroundImage = `url('${t.val}')`;
+                btn.onclick = () => { activeTerrain = t; state.currentTool = 'terrain-brush'; renderTerrainPalette(); };
+                palette.appendChild(btn);
+            });
+            const addBtn = document.createElement('button'); addBtn.innerText = "+ Add Image Tile"; addBtn.className = "primary"; addBtn.style.padding = "4px 8px";
+            addBtn.onclick = async () => { const url = await showPrompt("Paste image URL for new tile:", ""); if(url) { customTerrainList.push({ type: 'image', val: url, name: 'Custom' }); activeTerrain = customTerrainList[customTerrainList.length-1]; state.currentTool = 'terrain-brush'; renderTerrainPalette(); } };
+            palette.appendChild(addBtn);
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board'); if (!boardEl) return;
+            boardEl.innerHTML = '';
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                const row = document.createElement('div'); row.className = 'board-row';
+                for (let x = 0; x < BOARD_WIDTH; x++) {
+                    const cellData = state.board[y][x]; const cell = document.createElement('div');
+                    cell.className = `cell ${(x + y) % 2 === 0 ? 'light' : 'dark'}`;
+                    if (cellData.type === 'custom' && cellData.image) cell.style.backgroundImage = `url('${cellData.image}')`;
+                    else if (cellData.type !== 'empty') cell.style.backgroundColor = TERRAIN_COLORS[cellData.type] || cellData.color;
+
+                    const hl = state.highlightedCells.find(c => c.x === x && c.y === y);
+                    if (hl) cell.classList.add(`hl-${hl.type}`);
+
+                    const unitHere = state.units.find(u => u.x === x && u.y === y);
+                    if (unitHere) {
+                        const token = document.createElement('div');
+                        token.className = `token ${state.selectedUnit === unitHere ? 'selected' : ''}`;
+                        if (unitHere.image) { token.style.backgroundImage = `url('${unitHere.image}')`; token.style.color = 'transparent'; }
+                        else { token.style.backgroundColor = unitHere.color; token.textContent = unitHere.name.substring(0, 2).toUpperCase(); }
+                        const hpPct = Math.max(0, (unitHere.hp / unitHere.maxHp) * 100);
+                        token.innerHTML += `<div class="hp-bar-mini"><div class="hp-fill-mini" style="width: ${hpPct}%"></div></div>`;
+                        token.dataset.x = x; token.dataset.y = y; cell.appendChild(token);
+                    }
+                    cell.dataset.x = x; cell.dataset.y = y; row.appendChild(cell);
+                }
+                boardEl.appendChild(row);
+            }
+        }
+
+        function updatePanel() {
+            const sp = document.getElementById('selectedPanel'); const ep = document.getElementById('emptyPanel');
+            if (!state.selectedUnit) { sp.style.display = 'none'; ep.style.display = 'block'; return; }
+            ep.style.display = 'none'; sp.style.display = 'flex';
+            const u = state.selectedUnit; const hpPercent = Math.max(0, (u.hp / u.maxHp) * 100);
+
+            if (state.isEditing) {
+                sp.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;"><div class="panel-title" style="color: ${u.color}">Editing: ${u.name}</div><button class="primary" id="btn-save-edit" style="padding: 4px 8px; font-size:10px;">💾 Save</button></div>
+                    <div class="input-group" style="margin-top: 8px;"><label>Color & Image</label><div class="flex-row"><input type="color" id="e_color" value="${u.color}" style="width: 40px; padding: 0;"><input type="text" id="e_image" value="${u.image || ''}" placeholder="URL"></div></div>
+                    <div class="flex-row"><div class="input-group"><label>Max HP</label><input type="number" id="e_hp" value="${u.maxHp}"></div><div class="input-group"><label>AC</label><input type="number" id="e_ac" value="${u.ac}"></div><div class="input-group"><label>Spd</label><input type="number" id="e_speed" value="${u.speed}"></div></div>
+                    <div class="input-group"><label>Core Stats</label><div class="stat-grid"><input type="number" id="e_str" value="${u.stats.str}"><input type="number" id="e_dex" value="${u.stats.dex}"><input type="number" id="e_con" value="${u.stats.con}"><input type="number" id="e_int" value="${u.stats.int}"><input type="number" id="e_agi" value="${u.stats.agi}"></div></div>`;
+                return; 
+            }
+
+            let tabsHtml = `
+                <div class="tabs">
+                    <button class="tab-btn ${state.activeTab==='core'?'active':''}" onclick="state.activeTab='core'; updatePanel()">Core & Skills</button>
+                    <button class="tab-btn ${state.activeTab==='equip'?'active':''}" onclick="state.activeTab='equip'; updatePanel()">Equipment</button>
+                </div>
+            `;
+
+            let contentHtml = '';
+            if(state.activeTab === 'core') {
+                let skillsHtml = '';
+                if (state.showSkillsDropdown) {
+                    if (u.skills.length === 0) skillsHtml = `<div style="text-align:center; color:#888; font-size:10px; margin-top:4px;">No skills learned.</div>`;
+                    else {
+                        const list = u.skills.map(s => {
+                            const def = SKILL_LIBRARY[s.id]; const isActive = state.activeSkillId === s.id; const outOfUses = s.usesLeft <= 0;
+                            return `<div class="learned-skill-btn ${isActive ? 'active' : ''}" style="display:flex; justify-content:space-between; padding:6px; background:#f0f0ee; border-radius:4px; margin-top:4px; cursor:pointer;" onclick="if(!${outOfUses}) {state.actionMode='skill'; state.activeSkillId='${s.id}'; calculateHighlights(); updatePanel(); renderBoard();}">
+                                <span><strong>${def.name}</strong> (${def.range}ft)</span><span>${s.usesLeft} / ${def.uses}</span>
+                            </div>`;
+                        }).join('');
+                        skillsHtml = `<div>${list}</div>`;
+                    }
+                }
+
+                contentHtml = `
+                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>HP</span> <span>${u.hp} / ${u.maxHp}</span></div>
+                    <div class="hp-bar"><div class="hp-fill" style="width: ${hpPercent}%"></div></div>
+                    <div class="flex-row" style="margin-top: 4px;">
+                        <button class="danger btn-hp" data-amt="-1" style="flex:1;">-1</button><button class="danger btn-hp" data-amt="-5" style="flex:1;">-5</button>
+                        <button class="primary btn-hp" data-amt="1" style="flex:1;">+1</button><button class="primary btn-hp" data-amt="5" style="flex:1;">+5</button>
+                    </div>
+                    <div class="stat-grid" style="margin-top:8px;">
+                        <div class="stat-box">STR<strong>${u.stats.str}</strong></div><div class="stat-box">DEX<strong>${u.stats.dex}</strong></div>
+                        <div class="stat-box">CON<strong>${u.stats.con}</strong></div><div class="stat-box">INT<strong>${u.stats.int}</strong></div>
+                        <div class="stat-box">AGI<strong>${u.stats.agi}</strong></div>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:8px;">
+                        <button class="action-btn move ${state.actionMode === 'move' ? 'active-mode' : ''}" style="flex:1" onclick="setActionMode('move')">MOVE</button>
+                        <button class="action-btn attack ${state.actionMode === 'attack' ? 'active-mode' : ''}" style="flex:1" onclick="setActionMode('attack')">ATTACK</button>
+                        <button class="action-btn skill ${(state.actionMode === 'skill' || state.showSkillsDropdown) ? 'active-mode' : ''}" style="flex:1" onclick="setActionMode('skill')">SKILLS</button>
+                    </div>
+                    ${skillsHtml}
+                `;
+            } else {
+                // Equip Tab
+                const s = u.inventory;
+                const makeSlot = (key, label) => `<div class="inv-slot ${s[key]?'filled':''}" onclick="openEquipModal('${key}')"><strong>${label}</strong><span>${s[key] ? s[key].name : '+ Equip'}</span></div>`;
+                contentHtml = `
+                    <div class="inv-grid">
+                        ${makeSlot('head', 'Head')} ${makeSlot('chest', 'Chest')}
+                        ${makeSlot('leggings', 'Leggings')} ${makeSlot('boots', 'Boots')}
+                        ${makeSlot('mainHand', 'Main Hand')} ${makeSlot('offHand', 'Off Hand')}
+                        ${makeSlot('acc1', 'Accessory 1')} ${makeSlot('acc2', 'Accessory 2')}
+                        ${makeSlot('acc3', 'Accessory 3')} ${makeSlot('acc4', 'Accessory 4')}
+                    </div>
+                `;
+            }
+
+            sp.innerHTML = `
+                <button class="edit-btn" id="btn-edit-unit">⚙️ Edit</button>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><div class="panel-title" style="color: ${u.color};">${u.name}</div><div style="font-size: 10px; color: var(--txt2);">AC ${u.ac} • Spd ${u.speed}ft</div></div>
+                    ${u.image ? `<img src="${u.image}" style="width: 34px; height: 34px; border-radius: 6px; object-fit: cover;">` : ''}
+                </div>
+                ${tabsHtml}
+                ${contentHtml}
+                <button class="danger" id="btn-remove-unit" style="margin-top: 8px;">Remove Unit</button>
+            `;
+        }
+
+        // ==========================================
+        // 5. LIBRARY RENDERING (SPELLS & ITEMS)
+        // ==========================================
+        function openLibrary(type) {
+            libMode = type; libTab = 'all';
+            document.getElementById('lib-title').innerText = type === 'skill' ? 'Skill & Spell Library' : 'Item Library';
+            document.getElementById('libraryOverlay').style.display = 'flex';
+            renderLibrary();
+        }
+
+        function renderLibrary() {
+            const tabsEl = document.getElementById('lib-tabs');
+            const bodyEl = document.getElementById('libraryBody');
+            bodyEl.innerHTML = '';
+            
+            if (libMode === 'skill') {
+                tabsEl.innerHTML = ''; // No tabs needed for skills yet
+                Object.keys(SKILL_LIBRARY).forEach(key => {
+                    const s = SKILL_LIBRARY[key];
+                    let btn = state.selectedUnit 
+                        ? (state.selectedUnit.skills.find(x=>x.id===key) ? `<button disabled style="width:100%;">Learned</button>` : `<button class="primary" style="width:100%;" onclick="learnSkill('${key}')">Learn to ${state.selectedUnit.name}</button>`)
+                        : `<button disabled style="width:100%;">Select Unit to Learn</button>`;
+                    
+                    bodyEl.innerHTML += `<div class="item-card"><h4>${s.name}</h4><div class="item-meta">Range: ${s.range}ft • Uses: ${s.uses}</div><p style="font-size:11px; margin:4px 0;">${s.desc}</p><p style="font-size:10px; font-weight:bold; margin:0;">Eff: ${s.effect}</p><div style="margin-top:8px;">${btn}</div></div>`;
+                });
+            } else {
+                // Item Library
+                tabsEl.innerHTML = `
+                    <button class="tab-btn ${libTab==='all'?'active':''}" onclick="libTab='all'; renderLibrary()">All</button>
+                    <button class="tab-btn ${libTab==='weapon'?'active':''}" onclick="libTab='weapon'; renderLibrary()">Weapons</button>
+                    <button class="tab-btn ${libTab==='armor'?'active':''}" onclick="libTab='armor'; renderLibrary()">Armor</button>
+                    <button class="tab-btn ${libTab==='accessory'?'active':''}" onclick="libTab='accessory'; renderLibrary()">Accessory</button>
+                    <button class="tab-btn ${libTab==='potion'?'active':''}" onclick="libTab='potion'; renderLibrary()">Potion</button>
+                    <button class="tab-btn" onclick="document.getElementById('createItemOverlay').style.display='flex'" style="color:var(--primary);">+ Create Item</button>
+                `;
+
+                ITEM_LIBRARY.forEach(i => {
+                    let isArmor = ['head','chest','leggings','boots'].includes(i.type);
+                    if(libTab !== 'all' && i.type !== libTab && !(libTab === 'armor' && isArmor)) return;
+                    bodyEl.innerHTML += `<div class="item-card"><h4>${i.name}</h4><div class="item-meta">Type: ${i.type.toUpperCase()}</div><p style="font-size:11px; margin:4px 0;">${i.effect}</p><p style="font-size:10px; font-weight:bold; margin:0; color:#3B6D11;">${i.stats}</p></div>`;
+                });
+            }
+        }
+
+        function learnSkill(id) { state.selectedUnit.skills.push({ id: id, usesLeft: SKILL_LIBRARY[id].uses }); renderLibrary(); updatePanel(); }
+
+        function saveCustomItem() {
+            const item = {
+                id: 'i' + Date.now(),
+                name: document.getElementById('ci_name').value || 'Custom Item',
+                type: document.getElementById('ci_type').value,
+                effect: document.getElementById('ci_effect').value,
+                stats: document.getElementById('ci_stats').value
+            };
+            ITEM_LIBRARY.push(item);
+            document.getElementById('createItemOverlay').style.display = 'none';
+            renderLibrary();
+        }
+
+        // ==========================================
+        // 6. EQUIPPING
+        // ==========================================
+        let equipTargetSlot = null;
+        function openEquipModal(slot) {
+            equipTargetSlot = slot;
+            const body = document.getElementById('equipBody');
+            body.innerHTML = `<button class="danger" style="width:100%; margin-bottom:12px;" onclick="doEquip(null)">Unequip Current Item</button>`;
+            
+            // Map inventory slot to item types
+            let validTypes = [];
+            if(slot === 'mainHand' || slot === 'offHand') validTypes = ['weapon'];
+            else if(['head','chest','leggings','boots'].includes(slot)) validTypes = [slot];
+            else if(slot.startsWith('acc')) validTypes = ['accessory'];
+
+            ITEM_LIBRARY.filter(i => validTypes.includes(i.type)).forEach(i => {
+                body.innerHTML += `<div class="item-card" style="cursor:pointer;" onclick="doEquip('${i.id}')"><h4>${i.name}</h4><p style="font-size:10px; margin:2px 0;">${i.effect} | <b>${i.stats}</b></p></div>`;
+            });
+            if(body.innerHTML.indexOf('item-card') === -1) body.innerHTML += `<p style="font-size:12px; color:#888; text-align:center;">No valid items found for this slot in the Library.</p>`;
+            document.getElementById('eq-title').innerText = `Equip to ${slot.toUpperCase()}`;
+            document.getElementById('equipOverlay').style.display = 'flex';
+        }
+
+        function doEquip(itemId) {
+            saveHistory();
+            if(itemId) state.selectedUnit.inventory[equipTargetSlot] = ITEM_LIBRARY.find(i => i.id === itemId);
+            else state.selectedUnit.inventory[equipTargetSlot] = null;
+            document.getElementById('equipOverlay').style.display = 'none';
+            updatePanel();
+        }
+
+        // ==========================================
+        // 7. BOARD ACTIONS & EXECUTION
+        // ==========================================
+        function resetModes() { state.actionMode = null; state.activeSkillId = null; state.highlightedCells = []; state.showSkillsDropdown = false; renderBoard(); updatePanel();}
+        function setActionMode(mode) {
+            if (!state.selectedUnit) return;
+            if (mode === 'skill') { state.showSkillsDropdown = !state.showSkillsDropdown; if (!state.showSkillsDropdown) resetModes(); updatePanel(); return; }
+            if (state.actionMode === mode) resetModes(); else { state.actionMode = mode; state.showSkillsDropdown = false; calculateHighlights(); updatePanel(); renderBoard(); }
+        }
+
+        function calculateHighlights() {
+            state.highlightedCells = []; const u = state.selectedUnit; if (!u) return;
+            let rangeFt = 0; let hlClass = 'atk';
+            if (state.actionMode === 'move') { rangeFt = u.speed; hlClass = 'move'; } 
+            else if (state.actionMode === 'attack') rangeFt = u.attackRange; 
+            else if (state.actionMode === 'skill' && state.activeSkillId) { rangeFt = SKILL_LIBRARY[state.activeSkillId].range; hlClass = 'skill'; }
+
+            const maxTiles = Math.floor(rangeFt / 5);
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                for (let x = 0; x < BOARD_WIDTH; x++) {
+                    const dist = calculateDistance(u.x, u.y, x, y);
+                    if (dist > 0 && dist <= maxTiles && state.board[y][x].type !== 'wall') {
+                        const occupiedBy = state.units.find(un => un.x === x && un.y === y);
+                        if (state.actionMode === 'move' && !occupiedBy) state.highlightedCells.push({x, y, type: 'move'});
+                        else if (state.actionMode !== 'move') state.highlightedCells.push({x, y, type: hlClass});
+                    } else if (dist === 0 && state.actionMode === 'skill' && state.activeSkillId && SKILL_LIBRARY[state.activeSkillId].range === 0) {
+                        state.highlightedCells.push({x, y, type: 'skill'}); 
+                    }
+                }
+            }
+        }
+
+        async function executeAction(x, y, type) {
+            saveHistory(); const u = state.selectedUnit;
+            if (type === 'move') { u.x = x; u.y = y; addLog(`${u.name} moved.`); } 
+            else if (type === 'atk') {
+                const target = state.units.find(un => un.x === x && un.y === y);
+                if (target && target !== u) {
+                    const dmgStr = await showPrompt(`You attack ${target.name}.<br>Damage dealt (Enter 0 to miss):`, "0");
+                    if (dmgStr === null) { addLog(`⚔️ Attack cancelled.`); return; }
+                    const dmg = parseInt(dmgStr) || 0;
+                    if(dmg > 0) { target.hp -= dmg; addLog(`⚔️ ${u.name} hit ${target.name} for ${dmg} dmg.`); await checkDeath(target); } 
+                    else { addLog(`⚔️ ${u.name} missed ${target.name}!`); }
+                } else { addLog(`⚔️ No valid target at that position.`); }
+            } 
+            else if (type === 'skill' && state.activeSkillId) {
+                const skillDef = SKILL_LIBRARY[state.activeSkillId];
+                const learnedSkill = u.skills.find(s => s.id === state.activeSkillId);
+                if (learnedSkill && learnedSkill.usesLeft > 0) learnedSkill.usesLeft--;
+
+                const aoeTiles = skillDef.aoe ? Math.floor(skillDef.aoe / 5) : 0;
+                let targets = state.units.filter(un => calculateDistance(x, y, un.x, un.y) <= aoeTiles);
+
+                if (skillDef.type === 'heal') {
+                    if (targets.length === 0) targets = [u];
+                    for(let t of targets) {
+                        const healStr = await showPrompt(`Casting ${skillDef.name} on ${t.name}.<br>Healing applied (0 to skip):`, "0");
+                        if (healStr === null) { addLog(`🪄 Heal cancelled.`); break; }
+                        const heal = parseInt(healStr) || 0;
+                        if(heal > 0) { t.hp = Math.min(t.maxHp, t.hp + heal); addLog(`✨ ${u.name} healed ${t.name} for ${heal} HP.`); }
+                    }
+                } else if (skillDef.type === 'atk') {
+                    if (targets.length === 0) { await showAlert(`${u.name} cast on empty ground!`); addLog(`🔥 ${u.name} cast ${skillDef.name} into the void.`); }
+                    else {
+                        for(let t of targets) {
+                            const dmgStr = await showPrompt(`Casting ${skillDef.name} hitting ${t.name}.<br>Damage dealt (0 to save them!):`, "0");
+                            if (dmgStr === null) { addLog(`🔥 Spell cancelled.`); break; }
+                            const dmg = parseInt(dmgStr) || 0;
+                            if(dmg > 0) { t.hp -= dmg; addLog(`🔥 ${u.name} hit ${t.name} with ${skillDef.name} for ${dmg} dmg.`); await checkDeath(t); }
+                            else { addLog(`🛡️ ${t.name} successfully dodged the ${skillDef.name}!`); }
+                        }
+                    }
+                } else { await showAlert(`${u.name} cast ${skillDef.name}. Apply manually!`); addLog(`🪄 ${u.name} cast ${skillDef.name}.`); }
+            }
+        }
+
+        async function checkDeath(target) {
+            if (target.hp <= 0) {
+                await showAlert(`💀 <b>${target.name} has been defeated!</b>`); addLog(`💀 ${target.name} died.`);
+                state.units = state.units.filter(u => u !== target);
+            }
+        }
+
+        // ==========================================
+        // 8. GLOBAL EVENTS (Delegation & Painting)
+        // ==========================================
+        document.body.addEventListener('click', async (e) => {
+            const cell = e.target.closest('.cell'); const token = e.target.closest('.token');
+            const toolBtn = e.target.closest('.tool'); const hpBtn = e.target.closest('.btn-hp');
+            
+            if (cell || token) {
+                const targetEl = cell || token.closest('.cell');
+                if(targetEl) {
+                    const x = parseInt(targetEl.dataset.x); const y = parseInt(targetEl.dataset.y);
+                    if (isNaN(x) || isNaN(y)) return;
+                    const hl = state.highlightedCells.find(c => c.x === x && c.y === y);
+                    const unitHere = state.units.find(u => u.x === x && u.y === y);
+
+                    if (state.actionMode) {
+                        if (hl) { try { await executeAction(x, y, hl.type); } catch(err) { addLog(`⚠️ Action error: ${err.message}`); } resetModes(); } else resetModes();
+                        return;
+                    }
+                    if (unitHere) { state.selectedUnit = unitHere; resetModes(); return; }
+                }
+            }
+
+            if (toolBtn) {
+                document.querySelectorAll('.tool').forEach(b => b.classList.remove('active')); toolBtn.classList.add('active'); state.currentTool = toolBtn.dataset.tool;
+                const palette = document.getElementById('terrain-palette'); const customUrl = document.getElementById('customTileImg');
+                if (state.currentTool === 'terrain') { if(palette) palette.style.display = 'flex'; if(customUrl) customUrl.style.display = 'none'; } 
+                else { if(palette) palette.style.display = 'none'; if(customUrl) customUrl.style.display = state.currentTool === 'custom' ? 'block' : 'none'; }
+            }
+
+            if (hpBtn) { saveHistory(); state.selectedUnit.hp = Math.min(state.selectedUnit.maxHp, Math.max(0, state.selectedUnit.hp + parseInt(hpBtn.dataset.amt))); updatePanel(); renderBoard(); }
+            if (e.target.id === 'btn-edit-unit') { state.isEditing = true; updatePanel(); }
+            if (e.target.id === 'btn-save-edit') {
+                saveHistory(); const u = state.selectedUnit;
+                u.color = document.getElementById('e_color').value; u.image = document.getElementById('e_image').value;
+                u.maxHp = parseInt(document.getElementById('e_hp').value); u.ac = parseInt(document.getElementById('e_ac').value); u.speed = parseInt(document.getElementById('e_speed').value);
+                u.stats.str = parseInt(document.getElementById('e_str').value); u.stats.dex = parseInt(document.getElementById('e_dex').value); u.stats.con = parseInt(document.getElementById('e_con').value);
+                u.stats.int = parseInt(document.getElementById('e_int').value); u.stats.agi = parseInt(document.getElementById('e_agi').value);
+                if(u.hp > u.maxHp) u.hp = u.maxHp; state.isEditing = false; updatePanel(); renderBoard();
+            }
+            if (e.target.id === 'btn-remove-unit') { saveHistory(); state.units = state.units.filter(u => u !== state.selectedUnit); state.selectedUnit = null; resetModes(); }
+        });
+
+        let isDrawing = false;
+        document.getElementById('board').addEventListener('mousedown', (e) => { if(!state.actionMode) { const t = e.target.closest('.cell'); if(t) { isDrawing = true; paintCell(parseInt(t.dataset.x), parseInt(t.dataset.y)); } } });
+        document.addEventListener('mouseup', () => { isDrawing = false; });
+        document.getElementById('board').addEventListener('mouseover', (e) => { if(isDrawing && !state.actionMode) { const t = e.target.closest('.cell'); if(t) paintCell(parseInt(t.dataset.x), parseInt(t.dataset.y)); } });
+
+        function paintCell(x, y) {
+            if (isNaN(x) || isNaN(y)) return;
+            if (state.currentTool === 'custom') state.board[y][x] = { type: 'custom', image: document.getElementById('customTileImg').value };
+            else if (state.currentTool === 'terrain-brush') state.board[y][x] = { type: 'custom', image: activeTerrain.type === 'image' ? activeTerrain.val : null, color: activeTerrain.type === 'color' ? activeTerrain.val : null };
+            else state.board[y][x] = { type: state.currentTool, image: null };
+            renderBoard();
+        }
+
+        // Spawner
+        document.getElementById('btn-add-unit').onclick = () => {
+            saveHistory();
+            const unit = {
+                id: Date.now(), name: document.getElementById('c_name').value || 'Unknown', image: document.getElementById('c_image').value, color: document.getElementById('c_color').value,
+                maxHp: parseInt(document.getElementById('c_hp').value), hp: parseInt(document.getElementById('c_hp').value), ac: parseInt(document.getElementById('c_ac').value),
+                speed: parseInt(document.getElementById('c_speed').value), attackRange: parseInt(document.getElementById('c_range').value),
+                stats: { str: parseInt(document.getElementById('c_str').value), dex: parseInt(document.getElementById('c_dex').value), con: parseInt(document.getElementById('c_con').value), int: parseInt(document.getElementById('c_int').value), agi: parseInt(document.getElementById('c_agi').value) },
+                skills: [], inventory: { head:null, chest:null, leggings:null, boots:null, mainHand:null, offHand:null, acc1:null, acc2:null, acc3:null, acc4:null },
+                x: Math.floor(BOARD_WIDTH / 2), y: Math.floor(BOARD_HEIGHT / 2)
+            };
+            while(state.units.find(u => u.x === unit.x && u.y === unit.y)) { unit.x++; }
+            state.units.push(unit); state.selectedUnit = unit; addLog(`Deployed ${unit.name}`); resetModes();
+        };
+
+        document.getElementById('btn-undo').onclick = undoLastAction;
+        document.getElementById('btn-clear').onclick = () => { saveHistory(); initBoard(); state.units = []; resetModes(); addLog("Board cleared."); };
+
+        // INITIALIZE
+        initBoard(); renderBoard(); renderTerrainPalette();
+    </script>
+</body>
+</html>

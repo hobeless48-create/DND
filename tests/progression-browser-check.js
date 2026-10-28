@@ -1,0 +1,42 @@
+async (page) => {
+  const assert = (condition, message) => { if (!condition) throw new Error(message); };
+  await page.goto('http://127.0.0.1:5173/');
+  await page.evaluate(() => {
+    const state = JSON.parse(localStorage.getItem('blackstone-campaign-v1'));
+    state.mode = 'complete'; state.scene.choicesComplete = true; state.enemies.forEach(enemy => enemy.hp = 0);
+    state.party[0].level = 3; state.party[0].xp = 500; state.storyFlags.partyDefeated = false;
+    localStorage.setItem('blackstone-campaign-v1', JSON.stringify(state));
+  });
+  await page.reload();
+  assert(await page.locator('#descend-btn').isDisabled(), 'Next encounter must wait for earned choices.');
+  await page.getByRole('button', { name: 'Progression', exact: true }).click();
+  assert(await page.locator('[data-learn]').count() === 5, 'Level-two choice must show five options.');
+  await page.locator('[data-learn]').nth(0).check();
+  await page.getByRole('button', { name: 'Learn two skills' }).click();
+  assert((await page.locator('#progression-error').textContent()).includes('exactly two'), 'A single selected skill must be rejected.');
+  await page.locator('[data-learn]').nth(1).check();
+  await page.getByRole('button', { name: 'Learn two skills' }).click();
+  assert((await page.locator('#progression-title').textContent()).includes('level 3'), 'Next regular pool must be level three.');
+  await page.locator('[data-learn]').nth(0).check(); await page.locator('[data-learn]').nth(1).check();
+  await page.getByRole('button', { name: 'Learn two skills' }).click();
+  assert(await page.locator('[data-advance]').count() === 3, 'Level-three class choice must show three options.');
+  await page.locator('[data-advance]').first().click();
+  assert((await page.locator('#progression-title').textContent()).includes('ready'), 'All pending choices must finish.');
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  assert(await page.locator('#descend-btn').isEnabled(), 'Next encounter should unlock after choices.');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('blackstone-campaign-v1')));
+  assert(saved.party[0].abilities.length === 8 && saved.party[0].advancedPath[3], 'Level-three character must retain six regular plus two unique skills.');
+  await page.locator('#descend-btn').click();
+  await page.getByRole('button', { name: 'Enter the dungeon →', exact: true }).click();
+  const descended = await page.evaluate(() => JSON.parse(localStorage.getItem('blackstone-campaign-v1')));
+  assert(descended.scene.depth === 2 && descended.encounterPlan.regularLevel === 3, 'Next difficulty plan must use the actual leveled party.');
+  assert(descended.party[0].advancedPath[3] && descended.party[0].abilities.length === 8, 'Descending must preserve learned skills and class path.');
+  await page.goto('http://127.0.0.1:5173/workshop.html');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  assert(!overflow, 'Workshop should fit a narrow viewport.');
+  await page.getByRole('button', { name: 'Skill Canvas', exact: true }).click();
+  assert(await page.locator('#skill-canvas').isVisible(), 'Canvas must remain available on mobile.');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  return { levelChoices: 'two-of-five guard passed', advancedClass: 'three eligible roots and two unique grants passed', savedAtLevel3: 8, nextEncounterLevel: descended.encounterPlan.regularLevel, mobileWorkshop: 'passed' };
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "signal-sentry",
+  "name": "Signal Sentry",
+  "role": "regular",
+  "level": 1,
+  "hp": 18,
+  "ac": 12,
+  "speed": 5,
+  "stats": {
+    "str": 12,
+    "dex": 14,
+    "con": 12,
+    "int": 10,
+    "wis": 10,
+    "cha": 8
+  },
+  "attackDice": "1d6",
+  "turnProfile": "move-or-act",
+  "skillIds": [
+    "ember-wheel"
+  ],
+  "behavior": [
+    {
+      "priority": 1,
+      "trigger": "selfHpBelow70FirstTime",
+      "action": "useSkill",
+      "skillId": "ember-wheel",
+      "oncePerEncounter": true
+    },
+    {
+      "priority": 2,
+      "trigger": "enemyInRange",
+      "action": "attack",
+      "skillId": "",
+      "oncePerEncounter": false
+    },
+    {
+      "priority": 3,
+      "trigger": "otherwise",
+      "action": "approach",
+      "skillId": "",
+      "oncePerEncounter": false
+    }
+  ]
+}

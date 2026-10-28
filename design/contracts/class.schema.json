@@ -1,0 +1,838 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "concept": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "primaryStat": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "stats": {
+      "type": "object",
+      "properties": {
+        "str": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "dex": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "con": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "int": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "wis": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        },
+        "cha": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 20
+        }
+      },
+      "required": [
+        "str",
+        "dex",
+        "con",
+        "int",
+        "wis",
+        "cha"
+      ],
+      "additionalProperties": false
+    },
+    "customStats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,63}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "base": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "perLevel": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "base",
+          "perLevel"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 8
+    },
+    "base": {
+      "type": "object",
+      "properties": {
+        "hp": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 50
+        },
+        "ac": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 18
+        },
+        "speed": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 8
+        },
+        "attackDice": {
+          "type": "string",
+          "pattern": "^[1-6]d(4|6|8|10|12|20)([+-]([0-9]|[1-4][0-9]))?$"
+        },
+        "weapon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "rangeTiles": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "resourceName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "resourceMax": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 40
+        },
+        "resourceRegen": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        }
+      },
+      "required": [
+        "hp",
+        "ac",
+        "speed",
+        "attackDice",
+        "weapon",
+        "rangeTiles",
+        "resourceName",
+        "resourceMax",
+        "resourceRegen"
+      ],
+      "additionalProperties": false
+    },
+    "growth": {
+      "type": "object",
+      "properties": {
+        "hpPerLevel": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 8
+        },
+        "statEveryLevels": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 5
+        }
+      },
+      "required": [
+        "hpPerLevel",
+        "statEveryLevels"
+      ],
+      "additionalProperties": false
+    },
+    "levels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{1,63}$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                },
+                "level": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "resolution": {
+                  "enum": [
+                    "attack",
+                    "save",
+                    "automatic"
+                  ]
+                },
+                "saveStat": {
+                  "enum": [
+                    "str",
+                    "dex",
+                    "con",
+                    "int",
+                    "wis",
+                    "cha"
+                  ]
+                },
+                "halfOnSave": {
+                  "type": "boolean"
+                },
+                "targeting": {
+                  "type": "object",
+                  "properties": {
+                    "shape": {
+                      "enum": [
+                        "single",
+                        "self",
+                        "circle",
+                        "cone",
+                        "line",
+                        "cross",
+                        "ring"
+                      ]
+                    },
+                    "rangeTiles": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 12
+                    },
+                    "radiusTiles": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 5
+                    },
+                    "lengthTiles": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 12
+                    },
+                    "widthTiles": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 5
+                    },
+                    "angleDegrees": {
+                      "type": "integer",
+                      "minimum": 30,
+                      "maximum": 120
+                    },
+                    "metric": {
+                      "enum": [
+                        "euclidean",
+                        "chebyshev",
+                        "manhattan"
+                      ]
+                    },
+                    "team": {
+                      "enum": [
+                        "enemy",
+                        "ally",
+                        "self",
+                        "any"
+                      ]
+                    },
+                    "friendlyFire": {
+                      "type": "boolean"
+                    },
+                    "requiresLOS": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "shape",
+                    "rangeTiles",
+                    "radiusTiles",
+                    "lengthTiles",
+                    "widthTiles",
+                    "angleDegrees",
+                    "metric",
+                    "team",
+                    "friendlyFire",
+                    "requiresLOS"
+                  ],
+                  "additionalProperties": false
+                },
+                "effects": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "op": {
+                            "enum": [
+                              "damage",
+                              "heal",
+                              "shield"
+                            ]
+                          },
+                          "dice": {
+                            "type": "string",
+                            "pattern": "^[1-6]d(4|6|8|10|12|20)([+-]([0-9]|[1-4][0-9]))?$"
+                          },
+                          "stat": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 32
+                          },
+                          "coefficient": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 2
+                          }
+                        },
+                        "required": [
+                          "op",
+                          "dice",
+                          "stat",
+                          "coefficient"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "op": {
+                            "const": "condition"
+                          },
+                          "condition": {
+                            "enum": [
+                              "burn",
+                              "root",
+                              "slow",
+                              "weaken"
+                            ]
+                          },
+                          "durationTurns": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 3
+                          }
+                        },
+                        "required": [
+                          "op",
+                          "condition",
+                          "durationTurns"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "op": {
+                            "const": "move"
+                          },
+                          "movementTiles": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 6
+                          }
+                        },
+                        "required": [
+                          "op",
+                          "movementTiles"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "minItems": 1,
+                  "maxItems": 3
+                },
+                "maxTargets": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 12
+                },
+                "usesPerEncounter": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 99
+                },
+                "cooldownTurns": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9
+                },
+                "resourceCost": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                },
+                "visual": {
+                  "type": "object",
+                  "properties": {
+                    "color": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "style": {
+                      "enum": [
+                        "bolt",
+                        "burst",
+                        "sweep",
+                        "pulse"
+                      ]
+                    },
+                    "durationMs": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 1200
+                    }
+                  },
+                  "required": [
+                    "color",
+                    "style",
+                    "durationMs"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "description",
+                "level",
+                "resolution",
+                "saveStat",
+                "halfOnSave",
+                "targeting",
+                "effects",
+                "maxTargets",
+                "usesPerEncounter",
+                "cooldownTurns",
+                "resourceCost",
+                "visual"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 5,
+            "maxItems": 5
+          }
+        },
+        "required": [
+          "level",
+          "skills"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 10,
+      "maxItems": 10
+    },
+    "advancements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,63}$"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]{1,63}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "level": {
+            "enum": [
+              3,
+              5,
+              8
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "specialistStat": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "statBonusPercent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 30
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{1,63}$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                },
+                "level": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "resolution": {
+                  "enum": [
+                    "attack",
+                    "save",
+                    "automatic"
+                  ]
+                },
+                "saveStat": {
+                  "enum": [
+                    "str",
+                    "dex",
+                    "con",
+                    "int",
+                    "wis",
+                    "cha"
+                  ]
+                },
+                "halfOnSave": {
+                  "type": "boolean"
+                },
+                "targeting": {
+                  "type": "object",
+                  "properties": {
+                    "shape": {
+                      "enum": [
+                        "single",
+                        "self",
+                        "circle",
+                        "cone",
+                        "line",
+                        "cross",
+                        "ring"
+                      ]
+                    },
+                    "rangeTiles": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 12
+                    },
+                    "radiusTiles": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 5
+                    },
+                    "lengthTiles": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 12
+                    },
+                    "widthTiles": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 5
+                    },
+                    "angleDegrees": {
+                      "type": "integer",
+                      "minimum": 30,
+                      "maximum": 120
+                    },
+                    "metric": {
+                      "enum": [
+                        "euclidean",
+                        "chebyshev",
+                        "manhattan"
+                      ]
+                    },
+                    "team": {
+                      "enum": [
+                        "enemy",
+                        "ally",
+                        "self",
+                        "any"
+                      ]
+                    },
+                    "friendlyFire": {
+                      "type": "boolean"
+                    },
+                    "requiresLOS": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "shape",
+                    "rangeTiles",
+                    "radiusTiles",
+                    "lengthTiles",
+                    "widthTiles",
+                    "angleDegrees",
+                    "metric",
+                    "team",
+                    "friendlyFire",
+                    "requiresLOS"
+                  ],
+                  "additionalProperties": false
+                },
+                "effects": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "op": {
+                            "enum": [
+                              "damage",
+                              "heal",
+                              "shield"
+                            ]
+                          },
+                          "dice": {
+                            "type": "string",
+                            "pattern": "^[1-6]d(4|6|8|10|12|20)([+-]([0-9]|[1-4][0-9]))?$"
+                          },
+                          "stat": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 32
+                          },
+                          "coefficient": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 2
+                          }
+                        },
+                        "required": [
+                          "op",
+                          "dice",
+                          "stat",
+                          "coefficient"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "op": {
+                            "const": "condition"
+                          },
+                          "condition": {
+                            "enum": [
+                              "burn",
+                              "root",
+                              "slow",
+                              "weaken"
+                            ]
+                          },
+                          "durationTurns": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 3
+                          }
+                        },
+                        "required": [
+                          "op",
+                          "condition",
+                          "durationTurns"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "op": {
+                            "const": "move"
+                          },
+                          "movementTiles": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 6
+                          }
+                        },
+                        "required": [
+                          "op",
+                          "movementTiles"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "minItems": 1,
+                  "maxItems": 3
+                },
+                "maxTargets": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 12
+                },
+                "usesPerEncounter": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 99
+                },
+                "cooldownTurns": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9
+                },
+                "resourceCost": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                },
+                "visual": {
+                  "type": "object",
+                  "properties": {
+                    "color": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "style": {
+                      "enum": [
+                        "bolt",
+                        "burst",
+                        "sweep",
+                        "pulse"
+                      ]
+                    },
+                    "durationMs": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 1200
+                    }
+                  },
+                  "required": [
+                    "color",
+                    "style",
+                    "durationMs"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "description",
+                "level",
+                "resolution",
+                "saveStat",
+                "halfOnSave",
+                "targeting",
+                "effects",
+                "maxTargets",
+                "usesPerEncounter",
+                "cooldownTurns",
+                "resourceCost",
+                "visual"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "required": [
+          "id",
+          "parentId",
+          "level",
+          "name",
+          "description",
+          "specialistStat",
+          "statBonusPercent",
+          "skills"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 21,
+      "maxItems": 21
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "concept",
+    "primaryStat",
+    "stats",
+    "customStats",
+    "base",
+    "growth",
+    "levels",
+    "advancements"
+  ],
+  "additionalProperties": false
+}

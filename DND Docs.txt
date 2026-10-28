@@ -1,0 +1,413 @@
+# D&D AI-Assisted VTT — Full Code Documentation
+
+## What Is This?
+
+This is a single-file, self-contained browser app — a **Virtual Tabletop (VTT)** for running D&D-style combat encounters. It requires no server, no install, and no internet connection. Open the `.html` file in any modern browser and you're ready to play.
+
+The app gives you a grid battle board, tokens for each character or monster, a full equipment and inventory system, a spell/skill library, a gold/economy system, and a combat log. The "Export AI" button compresses the entire game state into a short text block you paste into ChatGPT, Claude, or any AI to serve as your Dungeon Master — letting the AI resolve actions, roll dice, and narrate outcomes.
+
+---
+
+## Layout & UI Structure
+
+The page is divided with CSS Grid into three zones:
+
+**Header** — the top bar with the app title, undo/save/load controls, board resize, Export AI, the Spells library button, and the Shop button.
+
+**Board** — the large left area. Contains the brush toolbar, an optional terrain palette, the grid itself, and a scrollable green-on-black game log at the bottom.
+
+**Panel** — the right sidebar. Shows a "Deploy Character" form when no unit is selected, or a full character management panel when a unit is selected.
+
+Modals (overlays) float above everything for: the Skill Library, the Item Shop, the Skill Editor, the Item Editor, the Equip picker, the AI Export text, and two custom dialog boxes (Alert and Prompt) that replace browser `alert()`/`prompt()`.
+
+---
+
+## CSS Variables & Theming
+
+All colors are defined as CSS custom properties on `:root`:
+
+`--primary` (#185FA5) — blue used for primary buttons, active states, and highlights.
+`--secondary` (#A32D2D) — red used for danger buttons and the HP bar.
+`--board-light` / `--board-dark` — the checkerboard colors of the grid.
+`--hl-move` / `--hl-atk` / `--hl-skill` — semi-transparent overlays for movement, attack, and skill range tiles.
+`--txt` / `--txt2` / `--brd` / `--card` — general text and border colors.
+`--gold` / `--gold-bg` — the gold/yellow palette used in the economy UI.
+
+---
+
+## Data: The Skill Library
+
+`SKILL_LIBRARY` is a plain JavaScript object (not an array) where each **key is the skill's unique ID** and each value is an object describing the skill. It is defined as `const` so it persists for the whole session, though new skills can be added to it dynamically via the skill editor.
+
+Each skill entry has:
+
+`name` — display name shown in the UI and logs.
+`type` — one of `'atk'` (damage), `'heal'` (restore HP), `'buff'` (positive status), `'debuff'` (negative status).
+`range` — range in feet. Divided by 5 to get grid cells.
+`aoe` — area of effect radius in feet. If non-zero and `targetMode` is `'center'`, all units within this radius of the targeted tile are hit.
+`uses` — maximum uses per rest (how many times a character can cast it before needing a long rest reset, though rest mechanics aren't automated).
+`desc` — short flavour/rules description shown in the library.
+`effect` — mechanical formula string, e.g. `'8d6 Fire damage'`.
+`originMode` — either `'tile'` (the AoE/shape is centered on a clicked tile) or `'caster'` (the shape always radiates from the casting unit's position).
+`targetMode` — either `'center'` (fire at an area, hits all units there) or `'choose'` (player manually selects individual target units using the floating target bar).
+`maxTargets` — only used when `targetMode` is `'choose'`. Limits how many individual units can be selected.
+`shape` — a 9×9 boolean grid (2D array). If non-null, this custom shape overrides the circular `aoe` calculation. Cells set to `true` are included in the blast pattern. The center cell [4][4] is always the origin point.
+`statusName` / `statusDesc` / `statusColor` — used by buff/debuff skills to define the status effect tag that gets applied to targets.
+`custom` — boolean flag marking skills created by the user (as opposed to the built-in defaults).
+
+Built-in skills: `fireball`, `magic_missile`, `cure_wounds`, `mass_heal`, `dash`, `cleave`.
+
+---
+
+## Data: The Item Library
+
+`ITEM_LIBRARY` is a regular JavaScript **array** (with `let`, so it can be replaced). Each element is an item object.
+
+`id` — unique string identifier, e.g. `'i1'`, `'i2'`. Custom items get `'i_' + Date.now()`.
+`name` — display name.
+`type` — determines which equipment slot(s) the item can go into. Values: `'weapon'` (fits mainHand or offHand), `'head'`, `'chest'`, `'leggings'`, `'boots'`, `'accessory'` (fits acc1–acc4), `'potion'` (consumable, not equippable).
+`effect` — text description of what it does, e.g. `'1d8 Slashing'`.
+`stats` — bonus string shown in the UI, e.g. `'+2 AC'`. Purely cosmetic/informational; stats are not auto-applied to unit numbers.
+`price` — cost in gold pieces.
+`healType` — only on potions: `'flat'`, `'dice'`, or `'percent'`.
+`healFlat` — flat HP amount healed (when `healType === 'flat'`).
+`healDice` — dice formula string, e.g. `'2d4+2'` (when `healType === 'dice'`).
+`healPct` — percent of the unit's max HP to restore (when `healType === 'percent'`).
+
+---
+
+## Data: The Game State Object `S`
+
+`S` is the central mutable state object. Everything that changes during play lives here.
+
+`S.board` — 2D array `[y][x]` of cell objects. Each cell has `type` (`'empty'`, `'wall'`, `'hazard'`, `'custom'`), `image` (URL string or null), and `color` (hex string or null). Dimensions match `BOARD_W` × `BOARD_H`.
+
+`S.units` — array of all unit objects currently on the board. Each unit object has:
+- `id` — unique number (`Date.now()` at creation time).
+- `name` — display name.
+- `image` — image URL for the token, or null (falls back to colored circle with initials).
+- `color` — hex color for the token background.
+- `maxHp` / `hp` — maximum and current hit points.
+- `ac` — armor class.
+- `speed` — movement speed in feet. Divided by 5 to get max movement cells per turn.
+- `attackRange` — attack range in feet. Divided by 5 to determine which tiles are highlighted orange on attack mode.
+- `stats` — object with `str`, `dex`, `con`, `int`, `agi` (Strength, Dexterity, Constitution, Intelligence, Agility). These are stored but not auto-applied to rolls; they're informational for the AI DM.
+- `skills` — array of learned skill objects, each with `id` (matching a key in `SKILL_LIBRARY`) and `usesLeft` (current remaining uses).
+- `buffs` — array of active status effect objects, each with `name`, `desc`, and `color`. Purely cosmetic/AI-facing; no mechanical effect is auto-applied.
+- `bag` — array of inventory entries, each with `itemId` (matching an `ITEM_LIBRARY` id) and `qty`.
+- `gold` — current gold piece balance.
+- `inventory` — equipment slots object with keys: `head`, `chest`, `leggings`, `boots`, `mainHand`, `offHand`, `acc1`, `acc2`, `acc3`, `acc4`. Each value is either null (empty) or a copy of an item object from `ITEM_LIBRARY`.
+- `x` / `y` — current grid coordinates.
+
+`S.selected` — reference to the currently selected unit object, or null.
+
+`S.actionMode` — current action being performed: `null` (idle), `'move'`, `'attack'`, or `'skill'`.
+
+`S.activeSkillId` — the key of the skill currently being aimed, or null.
+
+`S.highlights` — array of `{x, y, type}` objects marking which board cells glow (move = orange, atk = red, skill = purple).
+
+`S.editing` — boolean. True when the "Edit" panel form for a unit is open.
+
+`S.activeTab` — which panel tab is showing: `'core'`, `'equip'`, `'bag'`, `'gold'`, or `'buffs'`.
+
+`S.showSkills` — boolean. True when the skill list is expanded under the "Skills" action button.
+
+`S.tool` — the active board-painting brush: `'empty'`, `'wall'`, `'hazard'`, `'custom'`, or `'terrain-brush'`.
+
+`S.history` — array of snapshot objects used for undo. Each snapshot is a deep copy of `{units, board}`. Max 20 entries (older ones are shifted out).
+
+`S.log` — array of all game log message strings (prefixed with `'> '`). Kept in memory but the visible log is the `#game-log` div.
+
+`S.choosingTargets` — boolean. True when the floating "Choose Targets" bar is visible and the player is clicking individual units to target.
+
+`S.chosenTargets` — array of `{x, y}` coordinates the player has clicked during target-selection mode.
+
+`S.chooseMax` — maximum number of targets allowed for the current choose-mode skill.
+
+`S.chooseSkillId` — skill ID being resolved in choose-target mode.
+
+`S.chooseOriginX` / `S.chooseOriginY` — the tile the player clicked to initiate skill targeting (used to record where the skill was cast from).
+
+---
+
+## Other Module-Level Variables
+
+`BOARD_W` / `BOARD_H` — current board width and height in cells. Default 24×16. Can be changed via the Resize prompt; changing them calls `initBoard()` which wipes the board.
+
+`TERRAIN_COLORS` — small object mapping terrain type names to their background colors: `wall` → dark gray, `hazard` → red. Used when rendering non-empty, non-image cells.
+
+`customTerrainList` — array of custom terrain swatches. Each entry has `type` (`'color'` or `'image'`), `val` (hex string or URL), and `name`. Starts with Grass, Water, Dirt.
+
+`activeTerrain` — reference to the currently selected swatch in `customTerrainList`.
+
+`libMode` — which modal is open: `'skill'` (Spell Library) or `'item'` (Shop). Controls what `renderLibrary()` draws.
+
+`libTab` — active filter tab in the library: `'all'` or a type string like `'atk'`, `'weapon'`, etc.
+
+`editingSkillId` — the key of the skill currently open in the skill editor modal, or null if creating new.
+
+`editingItemId` — the id of the item currently open in the item editor modal, or null if creating new.
+
+`SHAPE_SIZE` (9) — the dimensions of the AoE shape grid (9×9 cells).
+
+`SHAPE_CTR` (4) — the index of the center cell in the shape grid (index 4 in a 0–8 grid).
+
+`skillShape` — 9×9 2D boolean array representing the currently drawn AoE shape in the skill editor. `true` = that cell is part of the effect area.
+
+`shapeDrawing` — boolean. True while the mouse button is held down on the shape grid, enabling drag-to-paint.
+
+`shapePaint` — boolean. Determines whether dragging sets cells to `true` or `false` (toggled based on the first cell clicked during a drag).
+
+`equipSlot` — string key of the slot being equipped to (set when `openEquipModal()` is called). Used when a modal item card is clicked.
+
+`skillOriginMode` — current setting for the skill editor's origin toggle: `'tile'` or `'caster'`.
+
+`boardPainting` — boolean. True while mouse is held down on the board and `actionMode` is null, enabling drag-to-paint terrain.
+
+---
+
+## Core Functions
+
+### `initBoard()`
+Resets `S.board` to a fresh `BOARD_W × BOARD_H` array, every cell set to `{type:'empty', image:null, color:null}`.
+
+### `addLog(msg)`
+Appends a message string to `S.log` and creates a new `<div>` in the `#game-log` element, then scrolls it to the bottom.
+
+### `saveHist()`
+Deep-copies the current `S.units` and `S.board` into `S.history`. Caps at 20 entries. Called before any destructive action so `undo()` can roll it back.
+
+### `undo()`
+Pops the last snapshot from `S.history`, restores `S.units` and `S.board`, clears selection and action mode, and re-renders.
+
+### `dist(x1, y1, x2, y2)`
+Returns the Chebyshev distance (max of absolute differences in x and y) between two grid coordinates. Used for all range checks — this means diagonal movement costs the same as cardinal movement, which is standard D&D 5e grid behavior.
+
+### `showAlert(msg)` / `showPrompt(msg, def)`
+Return Promises that resolve when the user clicks OK/Cancel on the custom modal dialogs. These replace `window.alert()` and `window.prompt()` so the UI doesn't freeze with browser chrome dialogs. `showPrompt` also supports Enter/Escape keyboard shortcuts.
+
+### `rollDice(formula)`
+Parses a dice formula string like `'2d6+3'` or `'1d8'` and returns a random integer result. Splits on `+`, handles each segment — if it contains `'d'` it rolls that die, otherwise adds a flat number.
+
+### `calcPotionHeal(item, unit)`
+Calculates how much HP a potion restores. Branches on `item.healType`: flat returns `item.healFlat`, dice calls `rollDice(item.healDice)`, percent returns a fraction of `unit.maxHp`.
+
+---
+
+## Board Rendering
+
+### `renderBoard()`
+Completely rebuilds the `#board` div's inner HTML from scratch. Iterates `BOARD_H` rows × `BOARD_W` columns. For each cell:
+- Applies checkerboard `light`/`dark` class based on `(x+y) % 2`.
+- Applies terrain background color or image.
+- Applies highlight class (`hl-move`, `hl-atk`, `hl-skill`) if the cell is in `S.highlights`.
+- Applies `hl-chosen` if in choose-target mode and this cell is in `S.chosenTargets`.
+- If a unit occupies this cell, creates a `.token` div with the unit's color/image, a mini HP bar, and status tags for each active buff.
+
+### `updateTargetChooserBar()`
+Shows or hides the floating bottom bar used in choose-target mode. Updates the counter (`X / max`) and the list of selected unit names.
+
+---
+
+## Panel Rendering
+
+### `updatePanel()`
+The main panel re-render function. If nothing is selected, shows the empty state. Otherwise builds the full character panel HTML as a string and injects it into `#selectedPanel`.
+
+The panel has five tabs, each rendering different `content`:
+
+**Core tab** — HP bar, ±1/±5 HP buttons, the 5 stat boxes (STR/DEX/CON/INT/AGI), and the three action buttons (Move, Attack, Skills). If `S.showSkills` is true, a list of the unit's learned skills appears below.
+
+**Equip tab** — a 2-column grid of 10 equipment slots. Each slot shows either `+ Equip` (empty) or the item name + effect + an Unequip button (filled). Clicking an empty slot opens `openEquipModal()`; clicking a filled slot's area also opens it; the Unequip button nulls that slot.
+
+**Bag tab** — a vertical list of inventory rows. Each row shows the item type pill, a quantity number input, the item name, and action buttons: "Use" (potions only), "Equip" (equippable items), and "✕" to remove. Quantity can be changed directly by typing; setting qty to 0 removes the entry.
+
+**Gold tab** — shows the unit's current gold, a manual Set input, quick +/-5/10/50/100 gp buttons, and a custom earn/spend input.
+
+**Status/Buffs tab** — lists active buff/debuff tags with remove buttons. Has an expandable panel to manually apply a new status effect with a name, description, and color.
+
+---
+
+## Highlights & Action Modes
+
+### `calcHighlights()`
+Calculates which cells should be highlighted based on `S.actionMode`:
+- **move**: all cells within `speed ÷ 5` tiles that are not walls and not occupied.
+- **attack**: all cells within `attackRange ÷ 5` tiles that are not walls.
+- **skill**: uses `originMode` and `shape` or `range` to determine the area — either a custom shape relative to the caster or relative to the target tile, or a plain radius.
+
+### `setMode(mode)`
+Toggles action modes. Clicking "Skills" toggles `S.showSkills`. Clicking Move or Attack a second time cancels that mode. Switching modes clears highlights and recalculates.
+
+---
+
+## Executing Actions
+
+### `execAction(x, y, hlType)`
+Called when a player clicks a highlighted cell. Branches on `hlType`:
+- **move**: teleports the unit to (x,y).
+- **atk**: finds the unit at (x,y), prompts for damage, reduces its HP, checks for death.
+- **skill**: looks up the skill, checks `targetMode`. If `'choose'`, delegates to `startChooseTargets()`. If `'center'`/`'caster'`, resolves immediately — collects all units in the shape or radius, then for `atk` skills prompts damage for each, for `heal` prompts heal amount, for buff/debuff pushes a status object onto each target's `buffs` array.
+
+### `checkDeath(unit)`
+If a unit's HP reaches 0, shows an alert, removes the unit from `S.units`, and clears `S.selected` if it was that unit.
+
+### `startChooseTargets(skillId, originX, originY)` / `cancelChooseTargets()` / `confirmChooseTargets()`
+The three-function flow for multi-target skills. `start` puts the app in choose-mode, showing the floating bar. Each board click during choose-mode toggles that unit in `S.chosenTargets`. `confirm` executes the skill against all chosen targets (same damage/heal/buff logic as `execAction`). `cancel` aborts cleanly.
+
+---
+
+## Gold System
+
+### `adjustGold(unit, delta)`
+Adds or subtracts `delta` from `unit.gold`, clamped at 0. Logs the transaction.
+
+### `setGold(unit, val)`
+Directly sets `unit.gold` to a specific value.
+
+Gold is **automatically deducted** when buying from the shop (in the `data-shopBuy` click handler). The buy button is disabled/greyed out if the unit can't afford the item. Each unit has its own completely separate gold pool.
+
+---
+
+## Bag System
+
+### `addToBag(unit, item, qty)`
+Finds an existing bag entry for `item.id` and increments qty, or pushes a new `{itemId, qty}` entry.
+
+### `removeFromBag(unit, idx)`
+Splices the entry at index `idx` from `unit.bag`.
+
+### `usePotionFromBag(unit, bagIdx)`
+Validates the item is a potion and the unit isn't full HP. Calls `calcPotionHeal`, applies healing, decrements qty (removes if 0), and shows a result alert.
+
+### `openEquipFromBag(unit, bagIdx)`
+Opens the equip overlay populated with the valid slots for that item type. After the player clicks a slot card (`data-bag-equip-slot`), the item is copied into that inventory slot.
+
+---
+
+## Equipment System
+
+### `openEquipModal(slot)`
+Sets the global `equipSlot` variable, then builds the equip picker modal. First shows items already in the unit's bag that match the slot's valid types, then shows all matching items from `ITEM_LIBRARY`. Clicking a card sets `unit.inventory[equipSlot]` to that item object. The Unequip button nulls the slot.
+
+`slotToTypes` maps each slot name to valid item types: `mainHand`/`offHand` → `['weapon']`, `head`/`chest`/`leggings`/`boots` → their matching type, `acc1`–`acc4` → `['accessory']`.
+
+**Bug fix note:** The original code used `t.dataset.equipItem` and `t.dataset.bagEquipSlot` to detect clicks, which failed if the user clicked on a child element (like the `<h4>` title) inside the clickable card. The fixed version uses `t.closest('[data-equip-item]')` and `t.closest('[data-bag-equip-slot]')` so clicks anywhere inside the card correctly register.
+
+---
+
+## Skill Editor
+
+### `openSkillEditor(id)`
+Opens the Create/Edit Skill modal. If `id` is provided, pre-fills all form fields from `SKILL_LIBRARY[id]`. Otherwise resets to defaults. Calls `renderShapeGrid()`, `updateSkillTypeHint()`, `updateStatusPreview()`, `updateTargetModeUI()`.
+
+### `renderShapeGrid()`
+Rebuilds the 9×9 visual grid in the skill editor. The center cell gets a special color (orange for tile-origin, red for caster-origin). Other cells are purple if `skillShape[r][c]` is true, dark otherwise. Mouse drag events on the grid toggle cells via `shapeDrawing` and `shapePaint`.
+
+### `shapePreset(preset)`
+Populates `skillShape` with preset patterns: `r1`/`r2`/`r3` are filled squares of radius 1/2/3 around center, `line` fills the right half of the center row, `cone` makes an expanding wedge to the right.
+
+### `setOriginMode(mode)`
+Switches between `'tile'` and `'caster'` origin, updates the toggle button active state, updates the hint text, and re-renders the shape grid.
+
+Saving a skill (`btn-save-skill`) reads all form values and writes/overwrites the entry in `SKILL_LIBRARY`. Deleting removes it from the library and strips it from all units' skill lists.
+
+---
+
+## Item Editor
+
+### `openItemEditor(id)` / `updatePotionSectionVisibility()` / `updateHealTypeRows()`
+Similar to the skill editor. Opens the modal, pre-fills if editing. The potion-specific section (heal type/amount) shows/hides based on the selected item type. Saving pushes a new item to `ITEM_LIBRARY` or replaces the existing one by index.
+
+---
+
+## Library / Shop Modal
+
+### `openLibrary(type)`
+Sets `libMode` to `'skill'` or `'item'`, resets `libTab` to `'all'`, shows the overlay, calls `renderLibrary()`.
+
+### `renderLibrary()`
+Renders the modal body differently depending on `libMode`:
+
+**Skill mode** — filter tabs for all/atk/heal/buff/debuff plus a "+ Create" button. Each skill gets a card with its type badge, range/uses, description, effect, optional status preview, and a Learn button. The Learn button is disabled if already learned; clicking it pushes `{id, usesLeft: sk.uses}` to the unit's `skills` array.
+
+**Item/Shop mode** — filter tabs for all/weapon/armor/accessory/potion plus "+ Create Item". Each item card shows type badge, price, effect, stats, potion heal info, and a Buy button. The Buy button checks if the selected unit has enough gold; if so, it calls `adjustGold(-price)` and `addToBag`. A gold bar at the top shows the unit's current balance.
+
+---
+
+## Terrain System
+
+### `renderTerrainPalette()`
+Builds the terrain swatch row from `customTerrainList`. Each swatch is a colored/imaged square. Clicking one sets `activeTerrain` and switches `S.tool` to `'terrain-brush'`. The "+ Add Image" button prompts for a URL and adds it to the list.
+
+### `paintCell(x, y)`
+Writes to `S.board[y][x]` based on the active tool. Custom tile uses the URL in `#customTileImg`. Terrain-brush uses the active terrain swatch. Other tools write their type name directly. Calls `renderBoard()` immediately.
+
+---
+
+## Save / Load / Resize
+
+### `saveBoard()` / `loadBoard()`
+Uses `localStorage` with keys like `'dnd_slot_Slot 1'`. Only the board (`BOARD_W`, `BOARD_H`, `S.board`) is saved — units are intentionally not saved to slots (they're session-only).
+
+### `resizeBoard()`
+Prompts for `W,H`. Validates max 60×40. Calls `initBoard()` and clears all units. Requires a unit re-deploy after resize.
+
+---
+
+## Export AI
+
+### `exportAI()`
+Generates a compressed, token-efficient plain-text snapshot of the game state and displays it in the export modal.
+
+The format uses a compact key:value shorthand to minimize token usage while remaining fully readable by an AI:
+
+- Board header line with dimensions and a note that each cell = 5ft.
+- WALLS, HAZARDS, TERRAIN lines listing coordinates only if those tile types exist.
+- UNITS section with one line per unit showing name, position, HP, AC, speed, and gold.
+- Indented sub-lines per unit for stats (abbreviated S/D/C/I/A), equipped items (slot=name), skills with current/max uses in brackets, bag contents, and active status effects.
+- SKILL_DEFS section listing only the skills that are actually in use on the board, with type, range, effect, aoe, and targeting mode.
+- A final instruction line telling the AI it is the DM and should resolve actions and roll dice.
+
+Items that are zero/empty are omitted entirely to keep the output short.
+
+---
+
+## Event Handling
+
+All user interactions are handled by a **single delegated click listener** on `document`. It checks `e.target` (and uses `.closest()` for container-level matches) against a long chain of conditions in order:
+
+1. Header buttons (save, load, resize, export, spells, shop, undo, clear).
+2. Target chooser bar (confirm, cancel).
+3. Modal close buttons.
+4. Library tab buttons and "New" buttons.
+5. Learn skill / shop buy.
+6. Save skill / delete skill / save item.
+7. Shape preset buttons.
+8. Equip slot click and unequip button.
+9. Equip item selection from modal (uses `closest`).
+10. Bag-equip-slot selection from `openEquipFromBag` flow (uses `closest`).
+11. Board brush tool buttons.
+12. Panel: edit, remove unit, save edit, HP +/-, tabs, action modes, skill list items, buff controls, bag actions, gold controls.
+13. Board cell clicks — handles choose-target mode, highlighted cell actions, and unit selection.
+
+A separate `change` listener handles bag quantity inputs, and the item type/heal type selects in the item editor.
+
+Two `mousedown`/`mouseover` listeners on `#board` handle drag-painting of terrain.
+
+Three listeners on the skill editor inputs trigger live UI updates (type hint, status preview, target mode row visibility).
+
+The "Deploy to Board" button has its own `addEventListener` rather than going through delegation.
+
+---
+
+## Initialization
+
+At the very bottom of the script, three calls run on page load:
+
+`initBoard()` — creates the blank board array.
+`renderBoard()` — paints the empty grid.
+`renderTerrainPalette()` — fills in the terrain swatches.
+
+No unit data is loaded on init; the board always starts empty each session (board tile data can be restored via the Save/Load slots, but units must be re-deployed manually).

@@ -1,0 +1,8 @@
+{
+  "questions": "ui-balance-decisions.json",
+  "recordedSelections": {
+    "balance": { "choice": "aggregate_budget", "selectedProbability": 1.0 },
+    "themes": { "choice": "content_packs", "selectedProbability": 1.0 }
+  },
+  "meaning": "Selected probabilities recorded from the Jev result. These express confidence in the design judgments, not future outcome probabilities."
+}

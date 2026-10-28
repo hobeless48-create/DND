@@ -1,0 +1,272 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "resolution": {
+      "enum": [
+        "attack",
+        "save",
+        "automatic"
+      ]
+    },
+    "saveStat": {
+      "enum": [
+        "str",
+        "dex",
+        "con",
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    "halfOnSave": {
+      "type": "boolean"
+    },
+    "targeting": {
+      "type": "object",
+      "properties": {
+        "shape": {
+          "enum": [
+            "single",
+            "self",
+            "circle",
+            "cone",
+            "line",
+            "cross",
+            "ring"
+          ]
+        },
+        "rangeTiles": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "radiusTiles": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "lengthTiles": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "widthTiles": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "angleDegrees": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 120
+        },
+        "metric": {
+          "enum": [
+            "euclidean",
+            "chebyshev",
+            "manhattan"
+          ]
+        },
+        "team": {
+          "enum": [
+            "enemy",
+            "ally",
+            "self",
+            "any"
+          ]
+        },
+        "friendlyFire": {
+          "type": "boolean"
+        },
+        "requiresLOS": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "shape",
+        "rangeTiles",
+        "radiusTiles",
+        "lengthTiles",
+        "widthTiles",
+        "angleDegrees",
+        "metric",
+        "team",
+        "friendlyFire",
+        "requiresLOS"
+      ],
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "enum": [
+                  "damage",
+                  "heal",
+                  "shield"
+                ]
+              },
+              "dice": {
+                "type": "string",
+                "pattern": "^[1-6]d(4|6|8|10|12|20)([+-]([0-9]|[1-4][0-9]))?$"
+              },
+              "stat": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              "coefficient": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 2
+              }
+            },
+            "required": [
+              "op",
+              "dice",
+              "stat",
+              "coefficient"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "condition"
+              },
+              "condition": {
+                "enum": [
+                  "burn",
+                  "root",
+                  "slow",
+                  "weaken"
+                ]
+              },
+              "durationTurns": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              }
+            },
+            "required": [
+              "op",
+              "condition",
+              "durationTurns"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "move"
+              },
+              "movementTiles": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6
+              }
+            },
+            "required": [
+              "op",
+              "movementTiles"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 3
+    },
+    "maxTargets": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "usesPerEncounter": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 99
+    },
+    "cooldownTurns": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9
+    },
+    "resourceCost": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 30
+    },
+    "visual": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "style": {
+          "enum": [
+            "bolt",
+            "burst",
+            "sweep",
+            "pulse"
+          ]
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 1200
+        }
+      },
+      "required": [
+        "color",
+        "style",
+        "durationMs"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "level",
+    "resolution",
+    "saveStat",
+    "halfOnSave",
+    "targeting",
+    "effects",
+    "maxTargets",
+    "usesPerEncounter",
+    "cooldownTurns",
+    "resourceCost",
+    "visual"
+  ],
+  "additionalProperties": false
+}
