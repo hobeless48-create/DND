@@ -2,14 +2,59 @@
 
 A local browser tactical campaign with fantasy, apocalypse and wilderness survival worlds, image terrain, and freely generated class sheets. The original DND HTML prototypes are kept beside the app for reference. The latest UI, worlds, power limits and DeepSeek cost calculations are in [UI-THEMES-BALANCE.md](UI-THEMES-BALANCE.md); the progression and difficulty specification is [DND-EXPANSION-SPEC.md](DND-EXPANSION-SPEC.md).
 
+## Goal
+
+Lead a party through generated tactical encounters, keep the heroes alive, and follow the selected world's expedition story. In the fantasy world, investigate the missing Blackstone survey crew, decide what to do about Mara Venn and the brass bell, then push through the Drowned Relay toward the Bell Vault and its guardian.
+
+Win each encounter by defeating every enemy. If every hero falls, the expedition ends in defeat and its scene is recorded. After clearing an encounter and completing earned progression choices, you can continue into another generated chapter. The current prototype supports continued delves rather than a fixed final campaign-victory screen.
+
 ## Run it
 
 1. Install Node.js 20.19+ or 22.12+.
-2. Open PowerShell in this folder and run `npm install` once.
-3. Run `npm run dev`.
-4. Open the Vite URL printed in the terminal. The game uses port 5173 when free and selects another port if it is occupied.
+2. Clone the repository and open PowerShell in its root, or use your existing checkout.
+3. Install dependencies and start the development servers:
+
+```powershell
+git clone https://github.com/hobeless48-create/DND.git
+cd DND
+npm install
+npm run dev
+```
+
+If you already have the repository, run only `npm install` and `npm run dev` from its root. Open the Vite URL printed in the terminal. The game uses port 5173 when free and selects another port if it is occupied. The development command also starts the local Node adapter used by `/api` routes.
 
 The local Dungeon Master, procedural maps, combat, dice, and save/load work without an API key. To enable optional DeepSeek narration and free-text intent parsing, copy `.env.example` to `.env`, add your own `DEEPSEEK_API_KEY`, then restart `npm run dev`. The key is read only by the local Node service; never place it in browser code. Keep `.env` private; it is ignored by Git.
+
+## How to play
+
+1. Choose a world, then select **New campaign**, **New expedition**, or **Assemble your crew**. The selected world applies to the new campaign.
+2. Create one to four heroes from the published class catalog. Choose a background and the starting skills. The bundled offline class lets you begin without generating a class or configuring DeepSeek.
+3. Set the difficulty for the next encounter. Begin the expedition and read the opening objective above the tactical map.
+4. On the active hero's turn, choose **Move**, then click a highlighted legal tile. Each square represents 5 ft; walls, occupied cells, and remaining movement limit where you can go.
+5. Choose **Attack** and a visible enemy in range, or choose **Use** beside a learned ability and select its target. Range, resources, uses, cooldowns, and the turn's action allowance must permit the action.
+6. Use the **Actions**, **Character**, **Pack**, and **Story** inspectors to review the party and campaign. Inspecting another hero does not make it that hero's turn.
+7. Choose **End turn** to advance initiative. Monsters act through the local engine, then control returns to the next eligible hero.
+8. Clear the first encounter and resolve its story choice. Open **Progression** for any earned skills or class choices before selecting **Continue to chapter**.
+9. Use **Save** and **Load** for the current campaign. The **Story** inspector also lets you save a named moment, resume an earlier scene, or export its checkpoint.
+
+You can use the action buttons for the full local combat loop. Optional DeepSeek adds narration and free-text intent parsing; the local rules still decide whether the resulting action is legal.
+
+### Controls and turn rules
+
+| Input or control | What it does |
+| --- | --- |
+| Hero card | Inspect that hero and their sheet |
+| Move + a highlighted tile | Spend the active hero's remaining movement |
+| Attack + an enemy | Attempt a legal attack using the turn's action |
+| Ability Use + target | Use a learned skill if its resources and restrictions allow |
+| End turn | Pass initiative to the next actor |
+| Focus the map, then arrow keys | Move the targeting cursor |
+| Enter / Space on the focused map | Choose the cursor's tile |
+| Progression | Resolve earned skill and advanced-class choices |
+| Save / Load | Store or restore the current local campaign |
+| Story → Resume scene / Export | Restore or export a saved scene checkpoint |
+
+Movement and the main action are tracked separately. A normal attack or action-using skill consumes the action; spending it does not grant another attack by selecting a different hero. Watch the active actor and remaining movement in the turn panel. Damage, rolls, initiative, enemy actions, XP, and rewards resolve locally.
 
 ## Current play loop
 
